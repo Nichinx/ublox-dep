@@ -18,12 +18,25 @@ SFE_UBLOX_GNSS myGNSS;
 char sitecode[6] = "SINUA"; //logger name - sensor site code
 int min_sat = 30;
 int loop_counter = 15;
+
 char dataToSend[200];
+char voltMessage[200];
 char Ctimestamp[13] = "";
 uint16_t store_rtc = 00; //store rtc alarm
 volatile bool OperationFlag = false;
 bool read_flag = false;
 uint8_t rx_lora_flag = 0;
+
+// initialize LoRa global variables
+uint8_t payload[RH_RF95_MAX_MESSAGE_LEN];
+uint8_t ack_payload[RH_RF95_MAX_MESSAGE_LEN];
+uint8_t len = sizeof(payload);
+uint8_t buf[RH_RF95_MAX_MESSAGE_LEN];
+uint8_t len2 = sizeof(buf);
+char ack_key[8] = "^REC'D_";
+char ack_msg[13];
+int lora_TX_end = 0;
+#define ACKWAIT 2000    
 
 #define DEBUG 1
 #define RTCINTPIN 6
@@ -47,6 +60,8 @@ void SERCOM1_Handler() {
 #define LED 13
 unsigned long start;
 
+FlashStorage(ack_filter, int);
+
 void setup() {
   Serial.begin(115200);
   Serial2.begin(115200);
@@ -59,7 +74,7 @@ void setup() {
   rtc.begin();
   attachInterrupt(RTCINTPIN, wake, FALLING);
   init_Sleep(); //initialize MCU sleep state
-  setAlarmEvery30(7); //rtc alarm settings 
+  setAlarmEvery30(5); //rtc alarm settings 
 
   pinMode(LED, OUTPUT);
   pinMode(RFM95_RST, OUTPUT);
@@ -274,10 +289,17 @@ void loop() {
     if (read_flag = true) {
       read_flag = false;
       rx_lora_flag == 0;
+
+      readTimeStamp();
+      strncat(dataToSend, "*", 2);
+      strncat(dataToSend, Ctimestamp, 13);
       send_thru_lora(dataToSend);
+
+      readVolt();
+      send_thru_lora(voltMessage);
     }
 
-  setAlarmEvery30(7);
+  setAlarmEvery30(5);
   rtc.clearINTStatus();
   attachInterrupt(RTCINTPIN, wake, FALLING);
   sleepNow();

@@ -94,19 +94,18 @@ void get_rtcm() {
   }
 }
 
-//void readVolt() {
-//  char voltMessage[200];
-//  char volt[10];
-//  
-//  for (int i = 0; i < 200; i++){
-//    voltMessage[i] = 0x00;  
-//  }
-//  
-//  snprintf(volt, sizeof volt, "%.2f", readBatteryVoltage(10));
-//  sprintf(voltMessage, "%s*VOLT:", sitecode);
-//  strncat(voltMessage, volt, sizeof(volt));
-//  Serial.print("voltage data message: "); Serial.println(voltMessage);
-//}
+void readVolt() {
+ char volt[10];
+ 
+ for (int i = 0; i < 200; i++){
+   voltMessage[i] = 0x00;  
+ }
+ 
+ snprintf(volt, sizeof volt, "%.2f", readBatteryVoltage(10));
+ sprintf(voltMessage, "%s*VOLT:", sitecode);
+ strncat(voltMessage, volt, sizeof(volt));
+ Serial.print("voltage data message: "); Serial.println(voltMessage);
+}
 
 void read_ublox_data() {
   for (int i = 0; i < 200; i++) {
@@ -180,7 +179,7 @@ void read_ublox_data() {
     f_accuracy_hor = f_accuracy_hor + ((float)hor_acc / 10000.0); // Convert from mm * 10^-1 to m
     f_accuracy_ver = f_accuracy_ver + ((float)ver_acc / 10000.0); // Convert from mm * 10^-1 to m
 
-    sprintf(tempstr, "%s:%d,%.9f,%.9f,%.4f,%.4f,%.4f,%d", sitecode, rtk_fixtype, lat, lon, f_accuracy_hor, f_accuracy_ver, f_msl, sat_num);
+    sprintf(tempstr, ">>%s:%d,%.9f,%.9f,%.4f,%.4f,%.4f,%d", sitecode, rtk_fixtype, lat, lon, f_accuracy_hor, f_accuracy_ver, f_msl, sat_num);
     strncpy(dataToSend, tempstr, String(tempstr).length() + 1);
     strncat(dataToSend, ",", 2);
     strncat(dataToSend, temp, sizeof(temp));
