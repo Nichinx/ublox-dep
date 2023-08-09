@@ -74,7 +74,7 @@ void setup() {
   rtc.begin();
   attachInterrupt(RTCINTPIN, wake, FALLING);
   init_Sleep(); //initialize MCU sleep state
-  setAlarmEvery30(5); //rtc alarm settings 
+  setAlarmEvery30(5); //rtc alarm settings : 10 minutes interval - case5
 
   pinMode(LED, OUTPUT);
   pinMode(RFM95_RST, OUTPUT);
@@ -296,10 +296,12 @@ void loop() {
       send_thru_lora(dataToSend);
 
       readVolt();
+      strncat(voltMessage, "*", 2);
+      strncat(voltMessage, Ctimestamp, 13);
       send_thru_lora(voltMessage);
     }
 
-  setAlarmEvery30(5);
+  setAlarmEvery30(5); //10 minutes interval - case5
   rtc.clearINTStatus();
   attachInterrupt(RTCINTPIN, wake, FALLING);
   sleepNow();

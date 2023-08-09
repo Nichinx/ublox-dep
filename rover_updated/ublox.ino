@@ -210,7 +210,7 @@ void no_ublox_data() {
   char ndstr[100];
   char ND[14] = "No Ublox data";
 
-  sprintf(ndstr, "%s:%s", sitecode, ND);
+  sprintf(ndstr, ">>%s:%s", sitecode, ND);
   strncat(dataToSend, ndstr, sizeof(ndstr));
   Serial.print("data to send: "); Serial.println(dataToSend);
 }
