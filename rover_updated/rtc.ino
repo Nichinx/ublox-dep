@@ -549,9 +549,10 @@ void delay_millis(int _delay)
 
 void wake()
 {
-  OperationFlag = true;
+  // OperationFlag = true;
   //detach the interrupt in the ISR so that multiple ISRs are not called
   detachInterrupt(RTCINTPIN);
+  Watchdog.reset();
 }
 
 void init_Sleep()
@@ -581,5 +582,18 @@ void sleepNow()
   Serial.println("MCU is going to sleep . . .");
   SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk; //disable systick interrupt
   LowPower.standby();                         //enters sleep mode
-  SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;  //Enabale systick interrupt
+  SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;  //Enable systick interrupt
 }
+
+/*Enable sleep-standby*/
+// void sleepNow() {
+//   // disable_watchdog();
+//   Watchdog.reset();
+//   Serial.println("MCU is going to sleep . . .");
+//   Serial.println("");
+//   __WFI();
+//   delay_millis(1000);
+//   // SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;  // disable systick interrupt
+//   // LowPower.standby();                          // enters sleep mode
+//   // SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;   // Enabale systick interrupt
+// }

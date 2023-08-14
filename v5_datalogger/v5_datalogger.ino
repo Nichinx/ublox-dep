@@ -420,13 +420,13 @@ void loop() {
       // Serial.println("get_logger_mode() == 7");
       // receive_ublox_data(7);
       // Watchdog.reset();
-      receive_lora_data(4);
+      receive_lora_data(7);
       Watchdog.reset();
       //if (dueSamplingTime() == 1){
       ////   get_Due_Data(1, get_serverNum_from_flashMem());
       ////   Watchdog.reset();
       //  send_rain_data(0);
-        // Watchdog.reset();
+      //  Watchdog.reset();
       // }
       turn_OFF_GSM(get_gsm_power_mode());
       Watchdog.reset();

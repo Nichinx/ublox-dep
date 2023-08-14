@@ -13,9 +13,9 @@ SFE_UBLOX_GNSS myGNSS;
 #define BUFLEN (5*RH_RF95_MAX_MESSAGE_LEN) //max size of data burst we can handle - (5 full RF buffers) - just arbitrarily large
 #define RFWAITTIME 500 //maximum milliseconds to wait for next LoRa packet - used to be 600 - may have been too long
 
-#define rtcm_timeout 90000 //1.5min
+#define rtcm_timeout 300000 //5min
 
-char sitecode[6] = "SINUA"; //logger name - sensor site code
+char sitecode[6] = "TESUA"; //logger name - sensor site code
 int min_sat = 30;
 int loop_counter = 15;
 
@@ -70,11 +70,12 @@ void setup() {
   pinPeripheral(10, PIO_SERCOM);
   pinPeripheral(11, PIO_SERCOM);
   delay(100);
-
+  
   rtc.begin();
   attachInterrupt(RTCINTPIN, wake, FALLING);
   init_Sleep(); //initialize MCU sleep state
   setAlarmEvery30(5); //rtc alarm settings : 10 minutes interval - case5
+  rf95.sleep();
 
   pinMode(LED, OUTPUT);
   pinMode(RFM95_RST, OUTPUT);
@@ -113,6 +114,7 @@ void setup() {
 
   rf95.setTxPower(23, false);
   init_ublox();
+  readTimeStamp();
 }
 
 //////lora always receiving rtcm
@@ -243,6 +245,7 @@ void setup() {
 
 /////lora sleep
 void loop() {
+  // detachInterrupt(digitalPinToInterrupt(RTCINTPIN));
   start = millis();
   rx_lora_flag = 0;
   
@@ -252,59 +255,62 @@ void loop() {
   
   if (rx_lora_flag == 0) {
     if (RTK() == 2 && SIV() >= min_sat) {
-        if (HACC() == 141 && VACC() == 100) {
-          read_ublox_data();
-          rx_lora_flag == 1;
-          read_flag = true;
-        }
-        else if (HACC() != 141 || VACC() != 100) {
-          for (int c = 0; c <= loop_counter; c++) {
-            get_rtcm();
-            VACC();
-
-            if (HACC() == 141 && VACC() == 100) {
-              read_ublox_data();
-              rx_lora_flag == 1;
-              read_flag = true;
-              break;
-            }
-
-            else if (c == loop_counter) {
-              read_ublox_data();
-              rx_lora_flag == 1;
-              read_flag = true;
-              break;
-            }
-          }
-        }
-
-      } else if ((RTK() != 2) || (SIV() < min_sat) || ((millis() - start) == rtcm_timeout)) {
-        Serial.println("Unable to obtain fix or no. of satellites reqd. not met");
-        no_ublox_data();     
+      if (HACC() == 141 && VACC() == 100) {
+        read_ublox_data();
         rx_lora_flag == 1;
         read_flag = true;
       }
+
+      else if (HACC() != 141 || VACC() != 100) {
+        for (int c = 0; c <= loop_counter; c++) {
+          get_rtcm();
+          VACC();
+
+          if (HACC() == 141 && VACC() == 100) {
+            read_ublox_data();
+            rx_lora_flag == 1;
+            read_flag = true;
+            break;
+          }
+
+          else if (c == loop_counter) {
+            read_ublox_data();
+            rx_lora_flag == 1;
+            read_flag = true;
+            break;
+          }
+        }
+      }
+
+    } else if ((RTK() != 2) || (SIV() < min_sat) || ((millis() - start) == rtcm_timeout)) {
+      Serial.println("Unable to obtain fix or no. of satellites reqd. not met");
+      no_ublox_data();     
+      rx_lora_flag == 1;
+      read_flag = true;
     }
+  }
 
-    if (read_flag = true) {
-      read_flag = false;
-      rx_lora_flag == 0;
+  if (read_flag = true) {
+    read_flag = false;
+    rx_lora_flag == 0;
 
-      readTimeStamp();
-      strncat(dataToSend, "*", 2);
-      strncat(dataToSend, Ctimestamp, 13);
-      send_thru_lora(dataToSend);
+    readTimeStamp();
+    strncat(dataToSend, "*", 2);
+    strncat(dataToSend, Ctimestamp, 13);
+    send_thru_lora(dataToSend);
 
-      readVolt();
-      strncat(voltMessage, "*", 2);
-      strncat(voltMessage, Ctimestamp, 13);
-      send_thru_lora(voltMessage);
-    }
+    readVolt();
+    send_thru_lora(voltMessage);
 
+    attachInterrupt(RTCINTPIN, wake, FALLING);
+    Watchdog.reset();
+    rf95.sleep();
+  }
+
+  attachInterrupt(RTCINTPIN, wake, FALLING);
+  Watchdog.reset();
   setAlarmEvery30(5); //10 minutes interval - case5
   rtc.clearINTStatus();
   attachInterrupt(RTCINTPIN, wake, FALLING);
   sleepNow();
-  
-  start = millis();
 }

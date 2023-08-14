@@ -111,17 +111,17 @@ void getAtcommand() {
     }  else if (get_logger_mode() == 7) {
       // Gateway with subsurface + rain gauge + ublox
       // receive_ublox_data(7);
-      receive_lora_data(4);
+      receive_lora_data(7);
       disable_watchdog();
       if (gsmPwrStat) {
         turn_ON_GSM(get_gsm_power_mode());
       }
-      if (dueSamplingTime() == 1){
-        // get_Due_Data(1, get_serverNum_from_flashMem());
-        // disable_watchdog();
-        send_rain_data(0);
-        disable_watchdog();
-      }
+      // if (dueSamplingTime() == 1){
+      //   // get_Due_Data(1, get_serverNum_from_flashMem());
+      //   // disable_watchdog();
+      //   send_rain_data(0);
+      //   disable_watchdog();
+      // }
       if (gsmPwrStat) {
         turn_OFF_GSM(get_gsm_power_mode());
       }
@@ -203,8 +203,8 @@ void getAtcommand() {
       Serial.println(get_logger_A_from_flashMem());
       Serial.print("Remote Sensor Name A (ublox): ");
       Serial.println(get_logger_B_from_flashMem());
-      Serial.print("Remote Sensor Name B (surficial): ");
-      Serial.println(get_logger_C_from_flashMem());
+      // Serial.print("Remote Sensor Name B (surficial): ");
+      // Serial.println(get_logger_C_from_flashMem());
     } else if (get_logger_mode() == 13) {
       Serial.print("Gateway name: ");
       Serial.println(get_logger_A_from_flashMem());
@@ -683,7 +683,7 @@ void printLoggerMode() {
   Serial.println("[4] Gateway mode with 2 Routers");
   Serial.println("[5] Gateway mode with 3 Routers");
   Serial.println("[6] Rain gauge sensor only - GSM");
-  Serial.println("[7] Gateway with subsurface + rain gauge + ublox + surficial");
+  Serial.println("[7] Gateway - ublox");
 }
 uint8_t get_logger_mode() {
   int lversion = loggerMode.read();
@@ -730,13 +730,13 @@ void get_logger_mode_equivalent() {
     Serial.print("Logger name:     ");
     Serial.println(get_logger_A_from_flashMem());
   } else if (get_logger_mode() == 7) {
-    Serial.println("Gateway with subsurface + rain gauge + ublox");
+    Serial.println("Gateway - ublox");
     Serial.print("Gateway name:     ");
     Serial.println(get_logger_A_from_flashMem());
     Serial.print("Remote Sensor Name A (ublox):  ");
     Serial.println(get_logger_B_from_flashMem());
-    Serial.print("Remote Sensor Name B (surficial):  ");
-    Serial.println(get_logger_C_from_flashMem());
+    // Serial.print("Remote Sensor Name B (surficial):  ");
+    // Serial.println(get_logger_C_from_flashMem());
   }else if (get_logger_mode() == 8) {
     Serial.println("Surficial Tilt");
     // Serial.print("Gateway name:     ");
@@ -939,13 +939,13 @@ void inputLoggerNames() {
       String inputLoggerB = Serial.readStringUntil('\n');
       Serial.println(inputLoggerB);
 
-      Serial.print("Input name of remote SENSOR B (surficial): ");
-      String inputLoggerC = Serial.readStringUntil('\n');
-      Serial.println(inputLoggerC);
+      // Serial.print("Input name of remote SENSOR B (surficial): ");
+      // String inputLoggerC = Serial.readStringUntil('\n');
+      // Serial.println(inputLoggerC);
 
       inputLoggerA.toCharArray(loggerName.sensorA, 6);
       inputLoggerB.toCharArray(loggerName.sensorB, 6);
-      inputLoggerB.toCharArray(loggerName.sensorC, 6);
+      // inputLoggerC.toCharArray(loggerName.sensorC, 6);
       flashLoggerName.write(loggerName);
     }
   } else if (get_logger_mode() == 13) {

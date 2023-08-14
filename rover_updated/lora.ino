@@ -4,6 +4,7 @@ void send_thru_lora(char* radiopacket){
     //int len = sizeof(payload);
     int len = String(radiopacket).length();
     int i=0, j=0;
+    memset(payload,'\0',255);
 
     Serial.println("Sending to rf95_server");
     // Send a message to rf95_server
