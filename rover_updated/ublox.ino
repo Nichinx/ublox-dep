@@ -111,6 +111,12 @@ void read_ublox_data() {
   for (int i = 0; i < 200; i++) {
     dataToSend[i] = 0x00;
   }
+  memset(dataToSend,'\0',200);
+
+  for (int i = 0; i < 200; i++){
+   voltMessage[i] = 0x00;  
+  }
+  memset(voltMessage,'\0',200);
 
   byte rtk_fixtype = RTK();
   int sat_num = SIV();
@@ -186,6 +192,11 @@ void read_ublox_data() {
     strncat(dataToSend, ",", 2);
     strncat(dataToSend, volt, sizeof(volt)); 
     Serial.print("data to send: "); Serial.println(dataToSend);
+
+    snprintf(volt, sizeof volt, "%.2f", readBatteryVoltage(10));
+    sprintf(voltMessage, "%s*VOLT:", sitecode);
+    strncat(voltMessage, volt, sizeof(volt));
+    Serial.print("voltage data message: "); Serial.println(voltMessage);
   }
 }
 
@@ -206,6 +217,7 @@ void no_ublox_data() {
   for (int i = 0; i < 200; i++){
     dataToSend[i] = 0x00;  
   } 
+  memset(dataToSend,'\0',200);
   
   char ndstr[100];
   char ND[14] = "No Ublox data";

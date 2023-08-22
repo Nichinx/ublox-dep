@@ -10,7 +10,7 @@ void send_thru_lora(char* radiopacket){
     // Send a message to rf95_server
 
     //do not stack
-    for(i=0; i<200; i++){
+    for(i=0; i<255; i++){
       payload[i] = (uint8_t)'0';
     }
     

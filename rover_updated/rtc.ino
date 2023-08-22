@@ -461,7 +461,7 @@ void setAlarmEvery30(int alarmSET)
         {
           store_rtc = 55;
         }
-        else if ((now.minute() >= 55) && (now.minute() <= 0))
+        else if ((now.minute() >= 55) && (now.minute() <= 59))
         {
           store_rtc = 0;
         }
@@ -513,6 +513,24 @@ void setAlarmEvery30(int alarmSET)
         }
         enable_rtc_interrupt();
         break;
+      }
+    case 8:  //set every 10 minutes interval
+      {
+        if ((now.minute() >= 0) && (now.minute() <= 9)) {
+          store_rtc = 10;
+        } else if ((now.minute() >= 10) && (now.minute() <= 19)) {
+          store_rtc = 20;
+        } else if ((now.minute() >= 20) && (now.minute() <= 29)) {
+          store_rtc = 30;
+        } else if ((now.minute() >= 30) && (now.minute() <= 39)) {
+          store_rtc = 40;
+        } else if ((now.minute() >= 40) && (now.minute() <= 49)) {
+          store_rtc = 50;
+        } else if ((now.minute() >= 50) && (now.minute() <= 59)) {
+          store_rtc = 0;
+        }
+        enable_rtc_interrupt();
+        break;
       }  
   }
 }
@@ -552,7 +570,7 @@ void wake()
   // OperationFlag = true;
   //detach the interrupt in the ISR so that multiple ISRs are not called
   detachInterrupt(RTCINTPIN);
-  Watchdog.reset();
+//  Watchdog.reset();
 }
 
 void init_Sleep()

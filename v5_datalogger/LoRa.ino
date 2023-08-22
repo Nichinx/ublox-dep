@@ -243,6 +243,7 @@ void receive_lora_data(uint8_t mode) {
             Serial.print("RSSI: ");
             Serial.println(tx_RSSI);
           }
+
         } else if (strstr(received, "*VOLT:")) {
           // Serial.print("received raw: ");
           Serial.println(received);
@@ -332,7 +333,6 @@ void receive_lora_data(uint8_t mode) {
               }
             }
           }
-
 
         } else {
           // valid transmitter with unknown data format
