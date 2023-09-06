@@ -370,10 +370,7 @@ void loop() {
       readTimeStamp();
       strncat(dataToSend, "*", 2);
       strncat(dataToSend, Ctimestamp, 13);
-
       send_thru_lora(dataToSend);
-      delay(1000);
-      send_thru_lora(voltMessage);
     }
 
   attachInterrupt(RTCINTPIN, wake, FALLING);

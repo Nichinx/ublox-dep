@@ -94,29 +94,29 @@ void get_rtcm() {
   }
 }
 
-void readVolt() {
- char volt[10];
+// void readVolt() {
+//  char volt[10];
  
- for (int i = 0; i < 200; i++){
-   voltMessage[i] = 0x00;  
- }
+//  for (int i = 0; i < 200; i++){
+//    voltMessage[i] = 0x00;  
+//  }
  
- snprintf(volt, sizeof volt, "%.2f", readBatteryVoltage(10));
- sprintf(voltMessage, "%s*VOLT:", sitecode);
- strncat(voltMessage, volt, sizeof(volt));
- Serial.print("voltage data message: "); Serial.println(voltMessage);
-}
+//  snprintf(volt, sizeof volt, "%.2f", readBatteryVoltage(10));
+//  sprintf(voltMessage, "%s*VOLT:", sitecode);
+//  strncat(voltMessage, volt, sizeof(volt));
+//  Serial.print("voltage data message: "); Serial.println(voltMessage);
+// }
 
 void read_ublox_data() {
+  memset(dataToSend,'\0',200);
   for (int i = 0; i < 200; i++) {
     dataToSend[i] = 0x00;
   }
-  memset(dataToSend,'\0',200);
 
+  memset(voltMessage,'\0',200);
   for (int i = 0; i < 200; i++){
    voltMessage[i] = 0x00;  
   }
-  memset(voltMessage,'\0',200);
 
   byte rtk_fixtype = RTK();
   int sat_num = SIV();
