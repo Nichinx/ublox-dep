@@ -75,7 +75,6 @@ void setup() {
   attachInterrupt(RTCINTPIN, wake, FALLING);
   init_Sleep(); //initialize MCU sleep state
   setAlarmEvery30(8); //rtc alarm settings
-  // rf95.sleep();
 
   pinMode(LED, OUTPUT);
   pinMode(RFM95_RST, OUTPUT);

@@ -120,7 +120,10 @@ void read_ublox_data() {
 
   byte rtk_fixtype = RTK();
   int sat_num = SIV();
-  float lat = 0.0, lon = 0.0;
+
+  // Defines storage for the lat and lon as double
+  double d_lat; // latitude
+  double d_lon; // longitude  
 
   // Now define float storage for the heights and accuracy
   float f_ellipsoid;
@@ -136,6 +139,7 @@ void read_ublox_data() {
   snprintf(temp, sizeof temp, "%.2f", readTemp());
 
   if (RTK() == 2 && SIV() >= min_sat) {
+    // First, let's collect the position data
     int32_t latitude = myGNSS.getHighResLatitude();
     int8_t latitudeHp = myGNSS.getHighResLatitudeHp();
     int32_t longitude = myGNSS.getHighResLongitude();
@@ -147,31 +151,11 @@ void read_ublox_data() {
     uint32_t hor_acc = myGNSS.getHorizontalAccuracy();
     uint32_t ver_acc = myGNSS.getVerticalAccuracy();
 
-    int32_t lat_int; // Integer part of the latitude in degrees
-    int32_t lat_frac; // Fractional part of the latitude
-    int32_t lon_int; // Integer part of the longitude in degrees
-    int32_t lon_frac; // Fractional part of the longitude
-
-    // Calculate the latitude and longitude integer and fractional parts
-    lat_int = latitude / 10000000; // Convert latitude from degrees * 10^-7 to Degrees
-    lat_frac = latitude - (lat_int * 10000000); // Calculate the fractional part of the latitude
-    lat_frac = (lat_frac * 100) + latitudeHp; // Now add the high resolution component
-
-    if (lat_frac < 0) {
-      lat_frac = 0 - lat_frac;  // If the fractional part is negative, remove the minus sign
-    }
-
-    lon_int = longitude / 10000000; // Convert latitude from degrees * 10^-7 to Degrees
-    lon_frac = longitude - (lon_int * 10000000); // Calculate the fractional part of the longitude
-    lon_frac = (lon_frac * 100) + longitudeHp; // Now add the high resolution component
-
-    if (lon_frac < 0) {
-      lon_frac = 0 - lon_frac;  // If the fractional part is negative, remove the minus sign
-    }
-
-    // Calculate lat-long in float
-    lat = lat + (float)lat_int + (float)lat_frac / pow(10, 9);
-    lon = lon + (float)lon_int + (float)lon_frac / pow(10, 9);
+    // Assemble the high precision latitude and longitude
+    d_lat = ((double)latitude) / 10000000.0; // Convert latitude from degrees * 10^-7 to degrees
+    d_lat += ((double)latitudeHp) / 1000000000.0; // Now add the high resolution component (degrees * 10^-9 )
+    d_lon = ((double)longitude) / 10000000.0; // Convert longitude from degrees * 10^-7 to degrees
+    d_lon += ((double)longitudeHp) / 1000000000.0; // Now add the high resolution component (degrees * 10^-9 )
 
     // Calculate the height above ellipsoid in mm * 10^-1
     f_ellipsoid = (ellipsoid * 10) + ellipsoidHp;  // Now convert to m
@@ -181,11 +165,11 @@ void read_ublox_data() {
     f_msl = (msl * 10) + mslHp;  // Now convert to m
     f_msl = f_msl / 10000.0; // Convert from mm * 10^-1 to m
 
-    // Now convert to m
-    f_accuracy_hor = f_accuracy_hor + ((float)hor_acc / 10000.0); // Convert from mm * 10^-1 to m
-    f_accuracy_ver = f_accuracy_ver + ((float)ver_acc / 10000.0); // Convert from mm * 10^-1 to m
+    // Convert the accuracy (mm * 10^-1) to a float
+    f_accuracy_hor = hor_acc / 10000.0; // Convert from mm * 10^-1 to m
+    f_accuracy_ver = ver_acc / 10000.0; // Convert from mm * 10^-1 to m
 
-    sprintf(tempstr, ">>%s:%d,%.9f,%.9f,%.4f,%.4f,%.4f,%d", sitecode, rtk_fixtype, lat, lon, f_accuracy_hor, f_accuracy_ver, f_msl, sat_num);
+    sprintf(tempstr, ">>%s:%d,%.9f,%.9f,%.4f,%.4f,%.4f,%d", sitecode, rtk_fixtype, d_lat, d_lon, f_accuracy_hor, f_accuracy_ver, f_msl, sat_num);
     strncpy(dataToSend, tempstr, String(tempstr).length() + 1);
     strncat(dataToSend, ",", 2);
     strncat(dataToSend, temp, sizeof(temp));
@@ -198,19 +182,6 @@ void read_ublox_data() {
     strncat(voltMessage, volt, sizeof(volt));
     Serial.print("voltage data message: "); Serial.println(voltMessage);
   }
-}
-
-void printFractional(int32_t fractional, uint8_t places) {
-  char tempstr[64];
-  if (places > 1) {
-    for (uint8_t place = places - 1; place > 0; place--)  {
-      if (fractional < pow(10, place))  {
-        strncat(dataToSend, "0", 1);
-      }
-    }
-  }
-  sprintf(tempstr, "%d", fractional);
-  strncat(dataToSend, tempstr, String(tempstr).length() + 1);
 }
 
 void no_ublox_data() {
