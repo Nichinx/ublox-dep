@@ -12,15 +12,18 @@ SFE_UBLOX_GNSS myGNSS;
 
 #define BUFLEN (5*RH_RF95_MAX_MESSAGE_LEN) //max size of data burst we can handle - (5 full RF buffers) - just arbitrarily large
 #define RFWAITTIME 500 //maximum milliseconds to wait for next LoRa packet - used to be 600 - may have been too long
-#define rtcm_timeout 300000 //5 minutes
+// #define rtcm_timeout 300000 //5 minutes
+#define rtcm_timeout 180000 //3 minutes
 
 char sitecode[6] = "TESUA"; //logger name - sensor site code
 int min_sat = 30;
-int loop_counter = 15;
+// int loop_counter = 15;
+int ave_count = 12;
 
 char dataToSend[200];
 char voltMessage[200];
 char Ctimestamp[13] = "";
+
 uint16_t store_rtc = 00; //store rtc alarm
 volatile bool OperationFlag = false;
 bool read_flag = false;
@@ -41,7 +44,7 @@ int lora_TX_end = 0;
 #define RTCINTPIN 6
 #define VBATPIN A7    //new copy
 #define VBATEXT A5
-#define UBXPWR 5     //ublox power pin
+// #define UBXPWR 5     //ublox power pin
 
 // for feather m0
 #define RFM95_CS 8
@@ -60,7 +63,7 @@ void SERCOM1_Handler() {
 #define LED 13
 unsigned long start;
 
-FlashStorage(ack_filter, int);
+// FlashStorage(ack_filter, int);
 
 void setup() {
   Serial.begin(115200);
@@ -78,7 +81,7 @@ void setup() {
 
   pinMode(LED, OUTPUT);
   pinMode(RFM95_RST, OUTPUT);
-  pinMode(UBXPWR, OUTPUT);
+  // pinMode(UBXPWR, OUTPUT);
   digitalWrite(RFM95_RST, HIGH);
 
   digitalWrite(RFM95_RST, LOW);
@@ -114,138 +117,114 @@ void setup() {
 
   rf95.setTxPower(23, false);
   init_ublox();
-  readTimeStamp();
+  // readTimeStamp();
 }
 
-//////lora always receiving rtcm
-//void loop() {
-////  int intent_delay = random(0, 1000); //set delay
-//  get_rtcm();
-////  Serial.print("getting "); VACC();
-//  Serial.print("fix type "); RTK();
-//  Serial.print("print "); SIV();
-//  rx_lora_flag = 0;
-//
-//  if (samplingTrial() && samplingSec()) {
-//    if (rx_lora_flag == 0) {
-//      if (RTK() == 2 && SIV() >= min_sat) {
-//        if (HACC() == 141 && VACC() == 100) {
-//          read_ublox_data();
-//          rx_lora_flag == 1;
-//          read_flag = true;
-//        }
-//        else if (HACC() != 141 || VACC() != 100) {
-//          for (int c = 0; c <= loop_counter; c++) {
-//            get_rtcm();
-//            VACC();
-//
-//            if (HACC() == 141 && VACC() == 100) {
-//              read_ublox_data();
-//              rx_lora_flag == 1;
-//              read_flag = true;
-//              break;
-//            }
-//
-//            else if (c == loop_counter) {
-//              read_ublox_data();
-//              rx_lora_flag == 1;
-//              read_flag = true;
-//              break;
-//            }
-//          }
-//        }
-//
-//      } else if (RTK() != 2 || SIV() < min_sat) {
-//        delay(23000);
-//        Serial.println("Unable to obtain fix or no. of satellites reqd. not met");
-//        no_ublox_data();     
-//        rx_lora_flag == 1;
-//        read_flag = true;
-//      }
-//    }
-//
-//    if (read_flag = true) {
-//      read_flag = false;
-//      rx_lora_flag == 0;
-//      
-//      readTimeStamp();
-//      strncat(dataToSend, "*", 2);
-//      strncat(dataToSend, Ctimestamp, 13);
-//
-////     Serial.print("Delaying at "); Serial.println(intent_delay);
-////     delay(intent_delay);
-//      send_thru_lora(dataToSend);
-//
-//      readVolt();
-//      send_thru_lora(voltMessage);
-//    }
-//  }
-//}
-
-
-//08.21.23
+//10.26.23 - averaging data with filter
 void loop() {
   start = millis();
   rx_lora_flag = 0;
-    
-    do {
-      get_rtcm();
-    } while (((RTK() != 2) || SIV() < min_sat) && ((millis() - start) < rtcm_timeout)); 
-  
-    if (RTK() == 2 && SIV() >= min_sat) {
-      if (rx_lora_flag == 0) {
-        if (HACC() == 141 && VACC() == 100) {
-          read_ublox_data();
-          rx_lora_flag == 1;
-          read_flag = true;
-        }
-        else if (HACC() != 141 || VACC() != 100) {
-          for (int c = 0; c <= loop_counter; c++) {
-            get_rtcm();
-            VACC();
 
-            if (HACC() == 141 && VACC() == 100) {
-              read_ublox_data();
-              rx_lora_flag == 1;
-              read_flag = true;
-              break;
-            }
+  do {
+    get_rtcm();
+  } while (((RTK() != 2) || SIV() < min_sat) && ((millis() - start) < rtcm_timeout)); 
 
-            else if (c == loop_counter) {
-              read_ublox_data();
-              rx_lora_flag == 1;
-              read_flag = true;
-              break;
-            }
-          }
-        }
-      }
-
-    } else if ((RTK() != 2) || (SIV() < min_sat) || ((millis() - start) >= rtcm_timeout)) {
-        Serial.println("Unable to obtain fix or no. of satellites reqd. not met");
-        no_ublox_data();     
-        rx_lora_flag == 1;
-        read_flag = true;
-    }  
-
-    if (read_flag = true) {
-      read_flag = false;
-      rx_lora_flag == 0;
-
-      readTimeStamp();
-      strncat(dataToSend, "*", 2);
-      strncat(dataToSend, Ctimestamp, 13);
-
-      send_thru_lora(dataToSend);
-      delay(1000);
-      send_thru_lora(voltMessage); //EOS
+  if (RTK() == 2 && SIV() >= min_sat) {
+    if (rx_lora_flag == 0) {
+      read_ublox_data();
+      rx_lora_flag == 1;
+      read_flag = true;
     }
+  } else if ((RTK() != 2) || (SIV() < min_sat) || ((millis() - start) >= rtcm_timeout)) {
+    Serial.println("Unable to obtain fix or no. of satellites reqd. not met");
+    no_ublox_data();     
+    rx_lora_flag == 1;
+    read_flag = true;
+  } 
+
+  if (read_flag = true) {
+    read_flag = false;
+    rx_lora_flag == 0;
+
+    readTimeStamp();
+    strncat(dataToSend, "*", 2);
+    strncat(dataToSend, Ctimestamp, 13);
+
+    send_thru_lora(dataToSend);
+    delay(1000);
+    send_thru_lora(voltMessage); //EOS
+  }
 
   attachInterrupt(RTCINTPIN, wake, FALLING);
   setAlarmEvery30(8);
   rtc.clearINTStatus();
   sleepNow();
 }
+
+
+// //08.21.23
+// void loop() {
+//   start = millis();
+//   rx_lora_flag = 0;
+    
+//     do {
+//       get_rtcm();
+//     } while (((RTK() != 2) || SIV() < min_sat) && ((millis() - start) < rtcm_timeout)); 
+  
+//     if (RTK() == 2 && SIV() >= min_sat) {
+//       if (rx_lora_flag == 0) {
+//         if (HACC() == 141 && VACC() == 100) {
+//           read_ublox_data();
+//           rx_lora_flag == 1;
+//           read_flag = true;
+//         }
+//         else if (HACC() != 141 || VACC() != 100) {
+//           for (int c = 0; c <= loop_counter; c++) {
+//             get_rtcm();
+//             VACC();
+
+//             if (HACC() == 141 && VACC() == 100) {
+//               read_ublox_data();
+//               rx_lora_flag == 1;
+//               read_flag = true;
+//               break;
+//             }
+
+//             else if (c == loop_counter) {
+//               read_ublox_data();
+//               rx_lora_flag == 1;
+//               read_flag = true;
+//               break;
+//             }
+//           }
+//         }
+//       }
+
+//     } else if ((RTK() != 2) || (SIV() < min_sat) || ((millis() - start) >= rtcm_timeout)) {
+//         Serial.println("Unable to obtain fix or no. of satellites reqd. not met");
+//         no_ublox_data();     
+//         rx_lora_flag == 1;
+//         read_flag = true;
+//     }  
+
+//     if (read_flag = true) {
+//       read_flag = false;
+//       rx_lora_flag == 0;
+
+//       readTimeStamp();
+//       strncat(dataToSend, "*", 2);
+//       strncat(dataToSend, Ctimestamp, 13);
+
+//       send_thru_lora(dataToSend);
+//       delay(1000);
+//       send_thru_lora(voltMessage); //EOS
+//     }
+
+//   attachInterrupt(RTCINTPIN, wake, FALLING);
+//   setAlarmEvery30(8);
+//   rtc.clearINTStatus();
+//   sleepNow();
+// }
 
 
 // //09.19.23 - with ubxpwr

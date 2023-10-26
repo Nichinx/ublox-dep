@@ -6,6 +6,8 @@ void init_ublox() {
   }
   myGNSS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
   myGNSS.setNavigationFrequency(5); //Set output to 20 times a second
+  myGNSS.setHighPrecisionMode(true);  
+  myGNSS.powerSaveMode(true);
 }
 
 byte RTK() {
@@ -107,6 +109,139 @@ void get_rtcm() {
 //  Serial.print("voltage data message: "); Serial.println(voltMessage);
 // }
 
+////v1
+// void read_ublox_data() {
+//   memset(dataToSend,'\0',200);
+//   for (int i = 0; i < 200; i++) {
+//     dataToSend[i] = 0x00;
+//   }
+
+//   memset(voltMessage,'\0',200);
+//   for (int i = 0; i < 200; i++){
+//    voltMessage[i] = 0x00;  
+//   }
+
+//   byte rtk_fixtype = RTK();
+//   int sat_num = SIV();
+//   int accu_count = 0;
+
+//   // Defines storage for the lat and lon as double
+//   double d_lat; // latitude
+//   double d_lon; // longitude
+
+//   double accu_lat = 0.0; // latitude accumulator
+//   double accu_lon = 0.0; // longitude accumulator
+
+//   // Now define float storage for the heights and accuracy
+//   float f_msl;
+//   float f_accuracy_hor;
+//   float f_accuracy_ver;
+
+//   float accu_msl = 0.0;           //msl accumulator
+//   float accu_accuracy_hor = 0.0;  //hacc acuumulator
+//   float accu_accuracy_ver = 0.0;  //vacc accumulator
+
+//   char tempstr[100];
+//   char volt[10];
+//   char temp[10];
+
+//   snprintf(volt, sizeof volt, "%.2f", readBatteryVoltage(10));
+//   snprintf(temp, sizeof temp, "%.2f", readTemp());
+
+//   // if (RTK() == 2 && SIV() >= min_sat) { //this condition is already set on main loop
+//   // for (int i = 0; i <= (ave_count - 1); i++) {
+//   for (int i = 1; i <= ave_count; i++) {
+//     get_rtcm();
+
+//     // First, let's collect the position data
+//     int32_t latitude = myGNSS.getHighResLatitude();
+//     int8_t latitudeHp = myGNSS.getHighResLatitudeHp();
+//     int32_t longitude = myGNSS.getHighResLongitude();
+//     int8_t longitudeHp = myGNSS.getHighResLongitudeHp();
+//     int32_t msl = myGNSS.getMeanSeaLevel();
+//     int8_t mslHp = myGNSS.getMeanSeaLevelHp();
+//     uint32_t hor_acc = myGNSS.getHorizontalAccuracy();
+//     uint32_t ver_acc = myGNSS.getVerticalAccuracy();
+
+//     // Assemble the high precision latitude and longitude
+//     d_lat = ((double)latitude) / 10000000.0; // Convert latitude from degrees * 10^-7 to degrees
+//     d_lat += ((double)latitudeHp) / 1000000000.0; // Now add the high resolution component (degrees * 10^-9 )
+//     d_lon = ((double)longitude) / 10000000.0; // Convert longitude from degrees * 10^-7 to degrees
+//     d_lon += ((double)longitudeHp) / 1000000000.0; // Now add the high resolution component (degrees * 10^-9 )
+
+//     // Calculate the height above mean sea level in mm * 10^-1
+//     f_msl = (msl * 10) + mslHp;  // Now convert to m
+//     f_msl = f_msl / 10000.0; // Convert from mm * 10^-1 to m
+
+//     // Convert the accuracy (mm * 10^-1) to a float
+//     f_accuracy_hor = hor_acc / 10000.0; // Convert from mm * 10^-1 to m
+//     f_accuracy_ver = ver_acc / 10000.0; // Convert from mm * 10^-1 to m
+
+//     // sprintf(tempstr, ">>%s:%d,%.9f,%.9f,%.4f,%.4f,%.4f,%d", sitecode, rtk_fixtype, d_lat, d_lon, f_accuracy_hor, f_accuracy_ver, f_msl, sat_num);
+//     // strncpy(dataToSend, tempstr, String(tempstr).length() + 1);
+//     // strncat(dataToSend, ",", 2);
+//     // strncat(dataToSend, temp, sizeof(temp));
+//     // strncat(dataToSend, ",", 2);
+//     // strncat(dataToSend, volt, sizeof(volt)); 
+//     // Serial.print("data to send: "); Serial.println(dataToSend);
+
+//     // snprintf(volt, sizeof volt, "%.2f", readBatteryVoltage(10));
+//     // sprintf(voltMessage, "%s*VOLT:", sitecode);
+//     // strncat(voltMessage, volt, sizeof(volt));
+//     // Serial.print("voltage data message: "); Serial.println(voltMessage);
+
+//     if ((HACC() == 141 && VACC() == 100) || (HACC() == 141 && VACC() <= 141)) {
+//       // Accumulation
+//       accu_lat = accu_lat + d_lat;
+//       accu_lon = accu_lon + d_lon;
+//       accu_msl = accu_msl + f_msl;
+//       accu_accuracy_hor = accu_accuracy_hor + f_accuracy_hor;
+//       accu_accuracy_ver = accu_accuracy_ver + f_accuracy_ver;
+//       accu_count = accu_count + 1;
+//       Serial.print("accu_count: "); Serial.println(accu_count);
+//       Serial.print("iter_count: "); Serial.println(i);
+//     } else {
+//       // i--; //loop until hacc&vacc conditions are satisfied
+//       i++; //wont wait for conditions to be satistied, loop continues to iterate regardless
+//       Serial.print("iter_count: "); Serial.println(i);
+//       get_rtcm();
+//     }
+//   }
+
+//   // Averaging
+//   d_lat = accu_lat / accu_count; 
+//   d_lon = accu_lon / accu_count;
+//   f_msl = accu_msl / accu_count; 
+//   f_accuracy_hor = accu_accuracy_hor / accu_count;
+//   f_accuracy_ver = accu_accuracy_ver / accu_count;
+
+//   if (d_lat != 0) { //try next na >1 kase ayaw pumasok sa else loop
+//     sprintf(tempstr, "double_%s:%d,%.9f,%.9f,%.4f,%.4f,%.4f,%d", sitecode, rtk_fixtype, d_lat, d_lon, f_accuracy_hor, f_accuracy_ver, f_msl, sat_num);
+//     strncpy(dataToSend, tempstr, String(tempstr).length() + 1);
+//     strncat(dataToSend, ",", 2);
+//     strncat(dataToSend, temp, sizeof(temp));
+//     strncat(dataToSend, ",", 2);
+//     strncat(dataToSend, volt, sizeof(volt)); 
+
+//     // readTimeStamp();
+//     // strncat(dataToSend, "*", 2);
+//     // strncat(dataToSend, Ctimestamp, 13);
+//     Serial.print("data to send: "); Serial.println(dataToSend);
+//     // get_rtcm();
+
+//   } else if (isnan(d_lat)) {
+//     no_ublox_data();
+
+//     // readTimeStamp();
+//     // strncat(dataToSend, "*", 2);
+//     // strncat(dataToSend, Ctimestamp, 13);
+//     Serial.print("data to send: "); Serial.println(dataToSend);
+//     // get_rtcm();
+//   }
+// }
+
+
+////v2
 void read_ublox_data() {
   memset(dataToSend,'\0',200);
   for (int i = 0; i < 200; i++) {
@@ -120,16 +255,23 @@ void read_ublox_data() {
 
   byte rtk_fixtype = RTK();
   int sat_num = SIV();
+  int accu_count = 0;
 
   // Defines storage for the lat and lon as double
   double d_lat; // latitude
-  double d_lon; // longitude  
+  double d_lon; // longitude
+
+  double accu_lat = 0.0; // latitude accumulator
+  double accu_lon = 0.0; // longitude accumulator
 
   // Now define float storage for the heights and accuracy
-  float f_ellipsoid;
   float f_msl;
   float f_accuracy_hor;
   float f_accuracy_ver;
+
+  float accu_msl = 0.0;           //msl accumulator
+  float accu_accuracy_hor = 0.0;  //hacc acuumulator
+  float accu_accuracy_ver = 0.0;  //vacc accumulator
 
   char tempstr[100];
   char volt[10];
@@ -138,49 +280,82 @@ void read_ublox_data() {
   snprintf(volt, sizeof volt, "%.2f", readBatteryVoltage(10));
   snprintf(temp, sizeof temp, "%.2f", readTemp());
 
-  if (RTK() == 2 && SIV() >= min_sat) {
-    // First, let's collect the position data
-    int32_t latitude = myGNSS.getHighResLatitude();
-    int8_t latitudeHp = myGNSS.getHighResLatitudeHp();
-    int32_t longitude = myGNSS.getHighResLongitude();
-    int8_t longitudeHp = myGNSS.getHighResLongitudeHp();
-    int32_t ellipsoid = myGNSS.getElipsoid();
-    int8_t ellipsoidHp = myGNSS.getElipsoidHp();
-    int32_t msl = myGNSS.getMeanSeaLevel();
-    int8_t mslHp = myGNSS.getMeanSeaLevelHp();
-    uint32_t hor_acc = myGNSS.getHorizontalAccuracy();
-    uint32_t ver_acc = myGNSS.getVerticalAccuracy();
+  for (int i = 1; i <= ave_count; i++) {
+    if ((millis() - start) < rtcm_timeout) {
+      get_rtcm();
 
-    // Assemble the high precision latitude and longitude
-    d_lat = ((double)latitude) / 10000000.0; // Convert latitude from degrees * 10^-7 to degrees
-    d_lat += ((double)latitudeHp) / 1000000000.0; // Now add the high resolution component (degrees * 10^-9 )
-    d_lon = ((double)longitude) / 10000000.0; // Convert longitude from degrees * 10^-7 to degrees
-    d_lon += ((double)longitudeHp) / 1000000000.0; // Now add the high resolution component (degrees * 10^-9 )
+      // First, let's collect the position data
+      int32_t latitude = myGNSS.getHighResLatitude();
+      int8_t latitudeHp = myGNSS.getHighResLatitudeHp();
+      int32_t longitude = myGNSS.getHighResLongitude();
+      int8_t longitudeHp = myGNSS.getHighResLongitudeHp();
+      int32_t msl = myGNSS.getMeanSeaLevel();
+      int8_t mslHp = myGNSS.getMeanSeaLevelHp();
+      uint32_t hor_acc = myGNSS.getHorizontalAccuracy();
+      uint32_t ver_acc = myGNSS.getVerticalAccuracy();
 
-    // Calculate the height above ellipsoid in mm * 10^-1
-    f_ellipsoid = (ellipsoid * 10) + ellipsoidHp;  // Now convert to m
-    f_ellipsoid = f_ellipsoid / 10000.0; // Convert from mm * 10^-1 to m
+      // Assemble the high precision latitude and longitude
+      d_lat = ((double)latitude) / 10000000.0; // Convert latitude from degrees * 10^-7 to degrees
+      d_lat += ((double)latitudeHp) / 1000000000.0; // Now add the high resolution component (degrees * 10^-9 )
+      d_lon = ((double)longitude) / 10000000.0; // Convert longitude from degrees * 10^-7 to degrees
+      d_lon += ((double)longitudeHp) / 1000000000.0; // Now add the high resolution component (degrees * 10^-9 )
 
-    // Calculate the height above mean sea level in mm * 10^-1
-    f_msl = (msl * 10) + mslHp;  // Now convert to m
-    f_msl = f_msl / 10000.0; // Convert from mm * 10^-1 to m
+      // Calculate the height above mean sea level in mm * 10^-1
+      f_msl = (msl * 10) + mslHp;  // Now convert to m
+      f_msl = f_msl / 10000.0; // Convert from mm * 10^-1 to m
 
-    // Convert the accuracy (mm * 10^-1) to a float
-    f_accuracy_hor = hor_acc / 10000.0; // Convert from mm * 10^-1 to m
-    f_accuracy_ver = ver_acc / 10000.0; // Convert from mm * 10^-1 to m
+      // Convert the accuracy (mm * 10^-1) to a float
+      f_accuracy_hor = hor_acc / 10000.0; // Convert from mm * 10^-1 to m
+      f_accuracy_ver = ver_acc / 10000.0; // Convert from mm * 10^-1 to m
 
-    sprintf(tempstr, ">>%s:%d,%.9f,%.9f,%.4f,%.4f,%.4f,%d", sitecode, rtk_fixtype, d_lat, d_lon, f_accuracy_hor, f_accuracy_ver, f_msl, sat_num);
+      if ((HACC() == 141 && VACC() <= 141)) {
+        // Accumulation
+        accu_lat = accu_lat + d_lat;
+        accu_lon = accu_lon + d_lon;
+        accu_msl = accu_msl + f_msl;
+        accu_accuracy_hor = accu_accuracy_hor + f_accuracy_hor;
+        accu_accuracy_ver = accu_accuracy_ver + f_accuracy_ver;
+        accu_count = accu_count + 1;
+        Serial.print("accu_count: "); Serial.println(accu_count);
+        Serial.print("iter_count: "); Serial.println(i);
+      } else {
+        i--; //loop until hacc&vacc conditions are satisfied or until timeout reached
+        Serial.print("iter_count: "); Serial.println(i);
+        get_rtcm();
+      }
+    } else if ((millis() - start) >= rtcm_timeout) {
+      break;
+    }
+  }
+
+  // Averaging
+  d_lat = accu_lat / accu_count; 
+  d_lon = accu_lon / accu_count;
+  f_msl = accu_msl / accu_count; 
+  f_accuracy_hor = accu_accuracy_hor / accu_count;
+  f_accuracy_ver = accu_accuracy_ver / accu_count;
+
+  if (d_lat > 0) { //try next na >0 (instead of !=0) kase ayaw pumasok sa else loop
+    sprintf(tempstr, "double_%s:%d,%.9f,%.9f,%.4f,%.4f,%.4f,%d", sitecode, rtk_fixtype, d_lat, d_lon, f_accuracy_hor, f_accuracy_ver, f_msl, sat_num);
     strncpy(dataToSend, tempstr, String(tempstr).length() + 1);
     strncat(dataToSend, ",", 2);
     strncat(dataToSend, temp, sizeof(temp));
     strncat(dataToSend, ",", 2);
     strncat(dataToSend, volt, sizeof(volt)); 
+
+    // readTimeStamp();
+    // strncat(dataToSend, "*", 2);
+    // strncat(dataToSend, Ctimestamp, 13);
     Serial.print("data to send: "); Serial.println(dataToSend);
 
-    snprintf(volt, sizeof volt, "%.2f", readBatteryVoltage(10));
-    sprintf(voltMessage, "%s*VOLT:", sitecode);
-    strncat(voltMessage, volt, sizeof(volt));
-    Serial.print("voltage data message: "); Serial.println(voltMessage);
+  } else {
+    no_ublox_data();
+
+    // readTimeStamp();
+    // strncat(dataToSend, "*", 2);
+    // strncat(dataToSend, Ctimestamp, 13);
+    Serial.print("data to send: "); Serial.println(dataToSend);
+    // get_rtcm();
   }
 }
 

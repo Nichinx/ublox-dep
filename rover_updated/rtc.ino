@@ -103,197 +103,42 @@ char *readDateTime()
   DateTime now = rtc.now(); //get the current date-time
   String ts = String(now.year());
 
-  if (now.month() <= 9)
-  {
+  if (now.month() <= 9) {
     ts += "0" + String(now.month());
-  }
-  else
-  {
+  } else {
     ts += String(now.month());
   }
 
-  if (now.date() <= 9)
-  {
+  if (now.date() <= 9) {
     ts += "0" + String(now.date());
-  }
-  else
-  {
+  } else {
     ts += String(now.date());
   }
 
-  if (now.hour() <= 9)
-  {
+  if (now.hour() <= 9) {
     ts += "0" + String(now.hour());
-  }
-  else
-  {
+  } else {
     ts += String(now.hour());
   }
 
-  if (now.minute() <= 9)
-  {
+  if (now.minute() <= 9) {
     ts += "0" + String(now.minute());
-  }
-  else
-  {
+  } else {
     ts += String(now.minute());
   }
 
-  if (now.second() <= 9)
-  {
+  if (now.second() <= 9) {
     ts += "0" + String(now.second());
-  }
-  else
-  {
+  } else {
     ts += String(now.second());
   }
 
   ts.remove(0, 2); //remove 1st 2 data in ts
-  // ts.toCharArray(Ctimestamp, 13);
   ts.toCharArray(storeDt, 13);
 
   return storeDt;
 }
 
-//default every 10 minutes interval
-void setAlarm()
-{
-  DateTime now = rtc.now(); //get the current date-time
-
-  if ((now.minute() >= 0) && (now.minute() <= 9))
-  {
-    store_rtc = 10;
-  }
-  else if ((now.minute() >= 10) && (now.minute() <= 19))
-  {
-    store_rtc = 20;
-  }
-  else if ((now.minute() >= 20) && (now.minute() <= 29))
-  {
-    store_rtc = 30;
-  }
-  else if ((now.minute() >= 30) && (now.minute() <= 39))
-  {
-    store_rtc = 40;
-  }
-  else if ((now.minute() >= 40) && (now.minute() <= 49))
-  {
-    store_rtc = 50;
-  }
-  else if ((now.minute() >= 50) && (now.minute() <= 59))
-  {
-    store_rtc = 0;
-  }
-  rtc.enableInterrupts(store_rtc, 00); // interrupt at (m,s)
-  if (DEBUG == 1)
-  {
-    Serial.print("Next alarm: ");
-  }
-  if (DEBUG == 1)
-  {
-    Serial.println(store_rtc);
-  }
-}
-
-int samplingTime() {
-  DateTime now = rtc.now();
-  if ((now.minute() == 0) || (now.minute() == 30)) {
-    return 1;
-  } else if ((now.minute() == 5) || (now.minute() == 35)) {    //uncomment
-    return 1;                                                   //uncomment
-  } else if ((now.minute() == 10) || (now.minute() == 40)) {
-    return 1;
-  } else if ((now.minute() == 15) || (now.minute() == 45)) {   //uncomment
-    return 1;                                                   //uncomment
-  } else if ((now.minute() == 20) || (now.minute() == 50)) {
-    return 1;
-  } else if ((now.minute() == 25) || (now.minute() == 55)) {   //uncomment
-    return 1;                                                   //uncomment
-
-  } else {
-    return 0;
-  }
-  enable_rtc_interrupt();
-}
-
-
-int samplingTrial() {
-  DateTime now = rtc.now();
-  if ((now.minute() == 0) || (now.minute() == 30)) {
-    return 1;
-  } else if ((now.minute() == 3) || (now.minute() == 33)) {
-    return 1;
-  } else if ((now.minute() == 5) || (now.minute() == 35)) {
-    return 1;
-  } else if ((now.minute() == 8) || (now.minute() == 38)) {
-    return 1;
-  } else if ((now.minute() == 10) || (now.minute() == 40)) {
-    return 1;
-  } else if ((now.minute() == 13) || (now.minute() == 43)) {
-    return 1;
-  } else if ((now.minute() == 15) || (now.minute() == 45)) {
-    return 1;
-  } else if ((now.minute() == 18) || (now.minute() == 48)) {
-    return 1;
-  } else if ((now.minute() == 20) || (now.minute() == 50)) {
-    return 1;
-  } else if ((now.minute() == 23) || (now.minute() == 53)) {
-    return 1;
-  } else if ((now.minute() == 25) || (now.minute() == 55)) {
-    return 1;
-  } else if ((now.minute() == 28) || (now.minute() == 58)) {
-    return 1;
-
-  } else {
-    return 0;
-  }
-  enable_rtc_interrupt();
-}
-
-
-int samplingSec() {
-  DateTime now = rtc.now();
-  if (now.second() == 0) {
-    //  if ((now.second() == 0) || (now.second() <= 1)){
-    return 1;
-  } else {
-    return 0;
-  }
-}
-
-int samplingMin() {
-  DateTime now = rtc.now();
-  if ((now.minute() == 0) || (now.minute() == 2) || (now.minute() == 4) || (now.minute() == 6) || (now.minute() == 8)) {
-    return 1;
-  } else if ((now.minute() == 1) || (now.minute() == 3) || (now.minute() == 5) || (now.minute() == 7) || (now.minute() == 9)) {
-    return 1;
-  } else if ((now.minute() == 10) || (now.minute() == 12) || (now.minute() == 14) || (now.minute() == 16) || (now.minute() == 18)) {
-    return 1;
-  } else if ((now.minute() == 11) || (now.minute() == 13) || (now.minute() == 15) || (now.minute() == 17) || (now.minute() == 19)) {
-    return 1;
-  } else if ((now.minute() == 20) || (now.minute() == 22) || (now.minute() == 24) || (now.minute() == 26) || (now.minute() == 28)) {
-    return 1;
-  } else if ((now.minute() == 21) || (now.minute() == 23) || (now.minute() == 25) || (now.minute() == 27) || (now.minute() == 29)) {
-    return 1;
-  } else if ((now.minute() == 30) || (now.minute() == 32) || (now.minute() == 34) || (now.minute() == 36) || (now.minute() == 38)) {
-    return 1;
-  } else if ((now.minute() == 31) || (now.minute() == 33) || (now.minute() == 35) || (now.minute() == 37) || (now.minute() == 39)) {
-    return 1;
-  } else if ((now.minute() == 40) || (now.minute() == 42) || (now.minute() == 44) || (now.minute() == 46) || (now.minute() == 48)) {
-    return 1;
-  } else if ((now.minute() == 41) || (now.minute() == 43) || (now.minute() == 45) || (now.minute() == 47) || (now.minute() == 49)) {
-    return 1;
-  } else if ((now.minute() == 50) || (now.minute() == 52) || (now.minute() == 54) || (now.minute() == 56) || (now.minute() == 58)) {
-    return 1;
-  } else if ((now.minute() == 51) || (now.minute() == 53) || (now.minute() == 55) || (now.minute() == 57) || (now.minute() == 59)) {
-    return 1;
-  } else {
-    return 0;
-  }
-  enable_rtc_interrupt();
-}
-
-//30 minutes interval
 void setAlarmEvery30(int alarmSET)
 {
   DateTime now = rtc.now(); //get the current date-time
@@ -538,14 +383,15 @@ void setAlarmEvery30(int alarmSET)
 void enable_rtc_interrupt()
 {
   rtc.enableInterrupts(store_rtc, 00); // interrupt at (minutes, seconds)
-  if (DEBUG == 1)
-  {
-    Serial.print("Next alarm: ");
-  }
-  if (DEBUG == 1)
-  {
+  if (DEBUG == 1) {
+    Serial.print("Next alarm: "); 
     Serial.println(store_rtc);
   }
+
+  // if (DEBUG == 1) {
+  //   Serial.println(store_rtc);
+  // }
+
   readTimeStamp();
 }
 
