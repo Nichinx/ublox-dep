@@ -324,6 +324,7 @@ void read_ublox_data() {
         get_rtcm();
       }
     } else if ((millis() - start) >= rtcm_timeout) {
+      Serial.println("Timeout reached!");
       break;
     }
   }
@@ -336,7 +337,7 @@ void read_ublox_data() {
   f_accuracy_ver = accu_accuracy_ver / accu_count;
 
   if (d_lat > 0) { //try next na >0 (instead of !=0) kase ayaw pumasok sa else loop
-    sprintf(tempstr, "double_%s:%d,%.9f,%.9f,%.4f,%.4f,%.4f,%d", sitecode, rtk_fixtype, d_lat, d_lon, f_accuracy_hor, f_accuracy_ver, f_msl, sat_num);
+    sprintf(tempstr, ">>%s:%d,%.9f,%.9f,%.4f,%.4f,%.4f,%d", sitecode, rtk_fixtype, d_lat, d_lon, f_accuracy_hor, f_accuracy_ver, f_msl, sat_num);
     strncpy(dataToSend, tempstr, String(tempstr).length() + 1);
     strncat(dataToSend, ",", 2);
     strncat(dataToSend, temp, sizeof(temp));
@@ -357,6 +358,11 @@ void read_ublox_data() {
     Serial.print("data to send: "); Serial.println(dataToSend);
     // get_rtcm();
   }
+
+  snprintf(volt, sizeof volt, "%.2f", readBatteryVoltage(10));
+  sprintf(voltMessage, "%s*VOLT:", sitecode);
+  strncat(voltMessage, volt, sizeof(volt));
+  Serial.print("voltage data message: "); Serial.println(voltMessage);
 }
 
 void no_ublox_data() {
@@ -370,5 +376,5 @@ void no_ublox_data() {
 
   sprintf(ndstr, ">>%s:%s", sitecode, ND);
   strncat(dataToSend, ndstr, sizeof(ndstr));
-  Serial.print("data to send: "); Serial.println(dataToSend);
+  // Serial.print("data to send: "); Serial.println(dataToSend);
 }

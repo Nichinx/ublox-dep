@@ -95,49 +95,49 @@ void readTimeStamp()
   ts.toCharArray(Ctimestamp, 13);
 }
 
-char *readDateTime()
-{
-  char storeDt[50];
-  storeDt[0] = '\0';
+// char *readDateTime()
+// {
+//   char storeDt[50];
+//   storeDt[0] = '\0';
 
-  DateTime now = rtc.now(); //get the current date-time
-  String ts = String(now.year());
+//   DateTime now = rtc.now(); //get the current date-time
+//   String ts = String(now.year());
 
-  if (now.month() <= 9) {
-    ts += "0" + String(now.month());
-  } else {
-    ts += String(now.month());
-  }
+//   if (now.month() <= 9) {
+//     ts += "0" + String(now.month());
+//   } else {
+//     ts += String(now.month());
+//   }
 
-  if (now.date() <= 9) {
-    ts += "0" + String(now.date());
-  } else {
-    ts += String(now.date());
-  }
+//   if (now.date() <= 9) {
+//     ts += "0" + String(now.date());
+//   } else {
+//     ts += String(now.date());
+//   }
 
-  if (now.hour() <= 9) {
-    ts += "0" + String(now.hour());
-  } else {
-    ts += String(now.hour());
-  }
+//   if (now.hour() <= 9) {
+//     ts += "0" + String(now.hour());
+//   } else {
+//     ts += String(now.hour());
+//   }
 
-  if (now.minute() <= 9) {
-    ts += "0" + String(now.minute());
-  } else {
-    ts += String(now.minute());
-  }
+//   if (now.minute() <= 9) {
+//     ts += "0" + String(now.minute());
+//   } else {
+//     ts += String(now.minute());
+//   }
 
-  if (now.second() <= 9) {
-    ts += "0" + String(now.second());
-  } else {
-    ts += String(now.second());
-  }
+//   if (now.second() <= 9) {
+//     ts += "0" + String(now.second());
+//   } else {
+//     ts += String(now.second());
+//   }
 
-  ts.remove(0, 2); //remove 1st 2 data in ts
-  ts.toCharArray(storeDt, 13);
+//   ts.remove(0, 2); //remove 1st 2 data in ts
+//   ts.toCharArray(storeDt, 13);
 
-  return storeDt;
-}
+//   return storeDt;
+// }
 
 void setAlarmEvery30(int alarmSET)
 {
