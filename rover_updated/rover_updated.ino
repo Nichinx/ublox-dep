@@ -12,8 +12,7 @@ SFE_UBLOX_GNSS myGNSS;
 
 #define BUFLEN (5*RH_RF95_MAX_MESSAGE_LEN) //max size of data burst we can handle - (5 full RF buffers) - just arbitrarily large
 #define RFWAITTIME 500 //maximum milliseconds to wait for next LoRa packet - used to be 600 - may have been too long
-// #define rtcm_timeout 300000 //5 minutes
-#define rtcm_timeout 120000 //2 minutes
+#define rtcm_timeout 180000 //3 minutes
 
 char sitecode[6] = "TESUA"; //logger name - sensor site code
 int min_sat = 30;
@@ -77,7 +76,7 @@ void setup() {
   rtc.begin();
   attachInterrupt(RTCINTPIN, wake, FALLING);
   init_Sleep(); //initialize MCU sleep state
-  setAlarmEvery30(6); //rtc alarm settings -- 5 minutes interval
+  setAlarmEvery30(8); //rtc alarm settings -- 10 minutes interval
 
   pinMode(LED, OUTPUT);
   pinMode(RFM95_RST, OUTPUT);
@@ -135,7 +134,7 @@ void loop() {
       rx_lora_flag == 1;
       read_flag = true;
     }
-  } else if ((RTK() != 2) || (SIV() < min_sat) || ((millis() - start) >= rtcm_timeout)) {
+  } else if (((RTK() != 2) || (SIV() < min_sat)) && ((millis() - start) >= rtcm_timeout)) {
     Serial.println("Unable to obtain fix or no. of satellites reqd. not met");
     no_ublox_data();     
     rx_lora_flag == 1;
@@ -152,15 +151,15 @@ void loop() {
 
     send_thru_lora(dataToSend);
     delay(1000);
-    // send_thru_lora(voltMessage); //EOS
+    send_thru_lora(voltMessage); //EOS
   }
 
   attachInterrupt(RTCINTPIN, wake, FALLING);
-  setAlarmEvery30(6); //5 minutes interval
+  setAlarmEvery30(8); //10 minutes interval
   rtc.clearINTStatus();
   sleepNow();
 
-  start = millis();
+  // start = millis();
 }
 
 

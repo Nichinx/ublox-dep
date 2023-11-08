@@ -355,7 +355,7 @@ void read_ublox_data() {
     // readTimeStamp();
     // strncat(dataToSend, "*", 2);
     // strncat(dataToSend, Ctimestamp, 13);
-    Serial.print("data to send: "); Serial.println(dataToSend);
+    // Serial.print("data to send: "); Serial.println(dataToSend);
     // get_rtcm();
   }
 
@@ -376,5 +376,5 @@ void no_ublox_data() {
 
   sprintf(ndstr, ">>%s:%s", sitecode, ND);
   strncat(dataToSend, ndstr, sizeof(ndstr));
-  // Serial.print("data to send: "); Serial.println(dataToSend);
+  Serial.print("data to send: "); Serial.println(dataToSend);
 }

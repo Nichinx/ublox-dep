@@ -1,9 +1,9 @@
 void send_thru_lora(char* radiopacket){
     rf95.setModemConfig(RH_RF95::Bw125Cr45Sf128);
     uint8_t payload[RH_RF95_MAX_MESSAGE_LEN];
-    //int len = sizeof(payload);
+    int len = sizeof(payload);
     // int len = String(radiopacket).length();
-    int i=0, j=0;
+    int i = 0, j = 0;
     memset(payload,'\0',251);
 
     Serial.println("Sending to rf95_server");
@@ -14,7 +14,7 @@ void send_thru_lora(char* radiopacket){
       payload[i] = (uint8_t)'0';
     }
     
-    for(i=0; i<251; i++){
+    for(i=0; i<len; i++){
       payload[i] = (uint8_t)radiopacket[i];
     }
     payload[i] = (uint8_t)'\0';
