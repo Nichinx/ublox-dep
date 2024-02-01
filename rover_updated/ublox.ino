@@ -336,7 +336,7 @@ void read_ublox_data() {
   f_accuracy_hor = accu_accuracy_hor / accu_count;
   f_accuracy_ver = accu_accuracy_ver / accu_count;
 
-  if (d_lat > 0) { //try next na >0 (instead of !=0) kase ayaw pumasok sa else loop
+  if ((d_lat > 0) || (d_lon > 0)) { //try next na >0 (instead of !=0) kase ayaw pumasok sa else loop
     sprintf(tempstr, ">>%s:%d,%.9f,%.9f,%.4f,%.4f,%.4f,%d", sitecode, rtk_fixtype, d_lat, d_lon, f_accuracy_hor, f_accuracy_ver, f_msl, sat_num);
     strncpy(dataToSend, tempstr, String(tempstr).length() + 1);
     strncat(dataToSend, ",", 2);

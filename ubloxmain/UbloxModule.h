@@ -2,30 +2,32 @@
 #define UbloxModule_h
 
 #include "Arduino.h"
-
-#endif
+#include <SparkFun_u-blox_GNSS_Arduino_Library.h>
 
 
 class UbloxModule {
-  private:
-    _moduleType = moduleType;
-
-
   public:
-    UbloxModule (char* moduleType);
+    UbloxModule();
     void init();
-    void set_lora_config(); //not sure pa dito
-    void ublox_ON();
-    void ublox_OFF();
+    // void ON();
+    // void OFF();
     void get_rtcm();
-    void get_gnss_data();
+    // void get_gnss_data();
     void no_ublox_data();
     byte get_RTK();
     byte get_SIV();
     float get_HACC();
     float get_VACC();
+
     // double data_accumulator();
     // double data_averaging();
 
+  private:
+    char dataToSend[200];
+    char sitecode[6] = "TESUA";
+    int min_sat = 30;
+    int ave_count = 12;
 
 };
+
+#endif

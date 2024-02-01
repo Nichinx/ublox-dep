@@ -80,7 +80,7 @@ void setup() {
 
   pinMode(LED, OUTPUT);
   pinMode(RFM95_RST, OUTPUT);
-  // pinMode(UBXPWR, OUTPUT);
+  // pinMode(UBXPWR, OUTPUT); 
   digitalWrite(RFM95_RST, HIGH);
 
   digitalWrite(RFM95_RST, LOW);
