@@ -6,7 +6,7 @@ LoRaModule::LoRaModule() : rf95(RFM95_CS, RFM95_INT) {
 
 void LoRaModule::init_lora() {
   pinMode(RFM95_RST, OUTPUT);
-  digitalWrite(RFM95_RST, HIGH);
+  // digitalWrite(RFM95_RST, HIGH);
 
   digitalWrite(RFM95_RST, LOW);
   delay(10);
