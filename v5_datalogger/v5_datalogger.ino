@@ -98,7 +98,7 @@ uint8_t ack_payload[RH_RF95_MAX_MESSAGE_LEN];
 uint8_t len = sizeof(payload);
 char ack_key[8] = "^REC'D_";
 // Function: Used for determining sender reciever address
-const uint8_t LOGGER_COUNT = 114;
+const uint8_t LOGGER_COUNT = 115;
 char logger_names[LOGGER_COUNT][6] = { "phita", "agbsb", "agbta", "bakg", "bakta", "baktb", "baktc", "banta", "bantb", "barsc",
                                        "bartb", "bayg", "baysb", "bayta", "baytc", "bcnta", "bcntb", "blcpz", "blcsb", "blcta",
                                        "bolra", "bolta", "btog", "btota", "btotb", "cartc", "cartd", "cudra", "cudtb", "dadra",
@@ -110,7 +110,7 @@ char logger_names[LOGGER_COUNT][6] = { "phita", "agbsb", "agbta", "bakg", "bakta
                                        "nurta", "nurtb", "oslra", "parta", "partb", "pepg", "pepsb", "peptc", "pinra", "plara",
                                        "pngta", "pngtb", "pugra", "sagta", "sagtb", "sibta", "sinsa", "sintb", "sumta", "sumtc",
                                        "talra", "tgata", "tgatb", "tueta", "tuetb", "umig", "testa", "testb", "testc", "teste",
-                                       "testf",  "tesua", "tesub", "sinua" };
+                                       "testf",  "tesua", "tesub", "sinua", "nagua" };
 // When adding new datalogger names:   Increment the variabe "logger_count" subscript for every datalogger name added.
 //                                     Limit datalogger names to five (5) characters with the 6th as terminating character
 
@@ -436,6 +436,14 @@ void loop() {
       send_thru_lora(IMUdataToSend);
       Watchdog.reset();
       send_thru_lora(read_batt_vol(get_calib_param()));
+    } else if (get_logger_mode() == 9) {
+      // Ublox - Rover Station
+      turn_ON_GSM(get_gsm_power_mode());
+      Watchdog.reset();
+      getGNSSData();
+      Watchdog.reset();
+      turn_OFF_GSM(get_gsm_power_mode());
+      Watchdog.reset();
     } else {
       // default arQ like sending
       turn_ON_GSM(get_gsm_power_mode());

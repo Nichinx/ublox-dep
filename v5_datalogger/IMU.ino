@@ -31,7 +31,7 @@ char *read_IMU_data()
 
     strncpy(IMUdataToSend, ">>", 2);
     strncat((IMUdataToSend), (get_logger_A_from_flashMem()), (20));
-    strncat(IMUdataToSend, "*0:", 3);
+    strncat(IMUdataToSend, "*0:", 4);
 
     for (int i = 0; i < 10; i++)
     {
@@ -39,25 +39,25 @@ char *read_IMU_data()
         sprintf(str, "%04X", (uint16_t)data[i]);
         //else
         strncat(IMUdataToSend, str, String(str).length() + 1);
-        if (i == 9) strncat(IMUdataToSend, ";", 1);
-        else strncat(IMUdataToSend, ",", 1);
+        if (i == 9) strncat(IMUdataToSend, ";", 2);
+        else strncat(IMUdataToSend, ",", 2);
     }
-    strncat(IMUdataToSend, ";", 1);
+    strncat(IMUdataToSend, ";", 2);
 
     String str2 = get_data_from_uart();
-    strncat(IMUdataToSend, "1:", 2);
+    strncat(IMUdataToSend, "1:", 3);
     str2.toCharArray(str, str2.length());
     strncat(IMUdataToSend, str, str2.length());
-    strncat(IMUdataToSend, ";", 1);
+    strncat(IMUdataToSend, ";", 2);
 
     String(taps).toCharArray(str, String(taps).length() + 1);
     strncat(IMUdataToSend, str, String(taps).length());
 
-    strncat(IMUdataToSend, ",", 1);
+    strncat(IMUdataToSend, ",", 2);
     strncat(IMUdataToSend, temp, sizeof(temp));
-    strncat(IMUdataToSend, ",", 1);
+    strncat(IMUdataToSend, ",", 2);
     strncat(IMUdataToSend, volt, sizeof(volt));
-    strncat(IMUdataToSend, "*", 1);
+    strncat(IMUdataToSend, "*", 2);
     strncat(IMUdataToSend, Ctimestamp, sizeof(Ctimestamp));
     delay(100);
 

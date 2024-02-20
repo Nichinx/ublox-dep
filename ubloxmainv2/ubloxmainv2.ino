@@ -34,31 +34,7 @@ void SERCOM1_Handler() {
   Serial2.IrqHandler();
 }
 
-
-class LED {
-  public:
-    LED() {}
-
-    LED(byte pin) {
-      this->pin = pin;
-    }
-
-    void init() {
-      pinMode(pin, OUTPUT);
-    }
-
-    void ON() {
-      digitalWrite(pin, HIGH);
-    }
-
-    void OFF() {
-      digitalWrite(pin, LOW);
-    }
-
-  private:
-    byte pin;
-
-};
+#define LED 13
 
 
 class UbloxModule {
@@ -140,7 +116,7 @@ class UbloxModule {
 
       bufptr = buf;
       if (rf95.available()) {
-        loraLED.ON();   //digitalWrite(LED, HIGH);
+        digitalWrite(LED, HIGH);
         rfbuflen = RH_RF95_MAX_MESSAGE_LEN;
         if (rf95.recv(bufptr, &rfbuflen)) {
           bufptr += rfbuflen;
@@ -162,7 +138,7 @@ class UbloxModule {
         }
         buflen = (bufptr - buf);     //Total bytes received in all packets
         Serial2.write(buf, buflen); //Send data to the GPS
-        loraLED.OFF();  //digitalWrite(LED, LOW);
+        digitalWrite(LED, LOW);
       }
     }
 
@@ -333,7 +309,6 @@ class UbloxModule {
 
   private:
     SFE_UBLOX_GNSS myGNSS;
-    LED loraLED;
     // RH_RF95 rf95;
 
     unsigned long start;
@@ -378,7 +353,6 @@ class UbloxModule {
 };
 
 UbloxModule UbloxModule;
-LED loraLED(13);
 
 void readTimeStamp() {
   DateTime now = rtc.now(); //get the current date-time
@@ -592,13 +566,17 @@ void setup() {
   Serial.begin(115200);
   Serial2.begin(115200);
 
-  loraLED.init();
+  // Assign pins 10 & 11 SERCOM functionality
+  pinPeripheral(10, PIO_SERCOM);
+  pinPeripheral(11, PIO_SERCOM);
+  delay(100);
 
   rtc.begin();
   attachInterrupt(RTCINTPIN, wake, FALLING);
   init_Sleep(); //initialize MCU sleep state
   setAlarmEvery30(0); //rtc alarm settings -- 10 minutes interval
 
+  pinMode(LED, OUTPUT);
   pinMode(RFM95_RST, OUTPUT);
   digitalWrite(RFM95_RST, LOW);
   delay(10);

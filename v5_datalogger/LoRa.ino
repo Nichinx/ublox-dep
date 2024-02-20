@@ -452,13 +452,13 @@ void receive_ublox_data(uint8_t mode) {
                     readTimeStamp();
                     Serial.print("-->>");
                     Serial.println(received);
-                    strncat(received,"*",1);
+                    strncat(received,"*",2);
                     strncat(received,Ctimestamp,13);
                   } else if (count2 == 2) {
                     // SENSOR B
                     Serial.print("-->>");
                     Serial.println(received);
-                    strncat(received,"*",1);
+                    strncat(received,"*",2);
                     strncat(received,Ctimestamp,13);
                     rcv_LoRa_flag = 1;
                     count2 = 0;
@@ -473,7 +473,7 @@ void receive_ublox_data(uint8_t mode) {
                     readTimeStamp();
                     Serial.print("-->>");
                     Serial.println(received);
-                    strncat(received,"*",1);
+                    strncat(received,"*",2);
                     strncat(received,Ctimestamp,13);
                   } else if (count2 == 2) {
                     // SENSOR B
@@ -497,7 +497,7 @@ void receive_ublox_data(uint8_t mode) {
                   readTimeStamp();
                   Serial.print("======================================");
                   
-                  strncat(received,"*",1);
+                  strncat(received,"*",2);
                   strncat(received,Ctimestamp,13);
                   rcv_LoRa_flag = 1;
                   Serial.println(received);
@@ -516,7 +516,7 @@ void receive_ublox_data(uint8_t mode) {
                   if (check_duplicates_in_stack((char *)received)) {
                     Serial.print("Adding data from unlisted transmitter to sending stack: ");
                     readTimeStamp();
-                    strncat(received,"*",1);
+                    strncat(received,"*",2);
                     strncat(received,Ctimestamp,13);
                     aggregate_received_data(received);
                   }
@@ -545,7 +545,7 @@ void receive_ublox_data(uint8_t mode) {
               Serial.print("Unrecognized data format :");
               Serial.println(received);
               readTimeStamp();
-              strncat(received,"*",1);
+              strncat(received,"*",2);
               strncat(received,Ctimestamp,13);
               aggregate_received_data(received);
             }
@@ -556,7 +556,7 @@ void receive_ublox_data(uint8_t mode) {
               if (allow_unlisted()) {
                 if (check_duplicates_in_stack((char *)received)) {
                   readTimeStamp();
-                  strncat(received,"*",1);
+                  strncat(received,"*",2);
                   strncat(received,Ctimestamp,13);
                   aggregate_received_data(received);
                 }
