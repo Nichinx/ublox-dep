@@ -3,7 +3,7 @@ SFE_UBLOX_GNSS myGNSS;
 
 #define BUFLEN (5*RH_RF95_MAX_MESSAGE_LEN) //max size of data burst we can handle - (5 full RF buffers) - just arbitrarily large
 #define RFWAITTIME 500 //maximum milliseconds to wait for next LoRa packet - used to be 600 - may have been too long
-#define rtcm_timeout 180000 //3 minutes
+#define rtcm_timeout 60000 //3 minutes
 
 char sitecode[6]; //logger name - sensor site code
 int min_sat = 30;
@@ -42,10 +42,23 @@ void init_ublox() {
     Serial.println(F("u-blox GNSS not detected at default I2C address. Please check wiring. Freezing."));
     while (1);
   }
-  myGNSS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
+  myGNSS.setI2COutput(COM_TYPE_UBX || COM_TYPE_NMEA); //Set the I2C port to output UBX only (turn off NMEA noise)
   myGNSS.setNavigationFrequency(5); //Set output to 20 times a second
   myGNSS.setHighPrecisionMode(true);  
   myGNSS.powerSaveMode(true);
+  initialize_sitecode();
+  disableNMEAMessages();
+}
+
+void disableNMEAMessages() {
+  Serial.println("disabling....");
+  // Disable specific NMEA messages
+  myGNSS.disableNMEAMessage(UBX_NMEA_GLL, PIO_SERCOM); //Several of these are on by default on ublox board so let's disable them
+  myGNSS.disableNMEAMessage(UBX_NMEA_GSA, PIO_SERCOM);
+  myGNSS.disableNMEAMessage(UBX_NMEA_GSV, PIO_SERCOM);
+  myGNSS.disableNMEAMessage(UBX_NMEA_RMC, PIO_SERCOM);
+  myGNSS.disableNMEAMessage(UBX_NMEA_GGA, PIO_SERCOM);
+  myGNSS.disableNMEAMessage(UBX_NMEA_VTG, PIO_SERCOM);
 }
 
 byte checkRTKFixType() {
@@ -130,6 +143,7 @@ void getGNSSData() {
   } else if (((checkRTKFixType() != 2) || (checkSatelliteCount() < min_sat)) && ((millis() - start) >= rtcm_timeout)) {
     Serial.println("Unable to obtain fix or number of satellites required not met");
     noGNSSDataAcquired();
+    prepareVoltMessage();
     rx_lora_flag = true;
     read_flag = true;
   }
@@ -248,7 +262,7 @@ void prepareGNSSDataString() {
 void prepareVoltMessage() {
   memset(voltMessage, '\0', sizeof(voltMessage));
 
-  // snprintf(volt, sizeof(volt), "%.2f", readBatteryVoltage(10));
+  snprintf(volt, sizeof(volt), "%.2f", readBatteryVoltage(10));
   sprintf(voltMessage, "%s*VOLT:", sitecode);
   strncat(voltMessage, volt, sizeof(volt));
   Serial.print("voltage data message: "); 

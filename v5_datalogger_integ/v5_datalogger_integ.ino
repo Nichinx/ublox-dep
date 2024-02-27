@@ -301,6 +301,26 @@ void setup() {
     Serial.println(F("****************************************"));
     bootMsg = false; //skip sending logger powerup msg
       
+  } else if (get_logger_mode() == 7) {
+    // GSM power related
+    Serial.println(F("****************************************"));
+    Serial.print("Logger Version: ");
+    Serial.println(get_logger_mode());
+    Serial.println("Default to GSM.");
+    Serial.println(F("****************************************"));
+    flashLed(LED_BUILTIN, 10, 100);
+    init_ublox();
+    Watchdog.reset();
+    
+  } else if (get_logger_mode() == 8) {
+    Serial.println(F("****************************************"));
+    Serial.print("Logger Version: ");
+    Serial.println(get_logger_mode());
+    Serial.println("Default to LoRa communication.");
+    Serial.println(F("****************************************"));
+    init_ublox();
+    bootMsg = false; //skip sending logger powerup msg
+      
   } else {
     // GSM power related
     Serial.println(F("****************************************"));

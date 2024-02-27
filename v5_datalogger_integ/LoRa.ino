@@ -33,6 +33,7 @@ void init_lora() {
 }
 
 void send_thru_lora(char *radiopacket) {
+  rf95.setModemConfig(RH_RF95::Bw125Cr45Sf128);
   char ack_from_gateway[13];
   ack_from_gateway[0]=0x00;
   if (debug_flag == 0) { //reset watchdog before resuming
@@ -186,6 +187,7 @@ void key_gen(char *_reference_string) {
 // }
 
 void receive_lora_data(uint8_t mode) {
+  rf95.setModemConfig(RH_RF95::Bw125Cr45Sf128);
   lora_TX_end = 0;
   rcv_LoRa_flag = 0;
 
