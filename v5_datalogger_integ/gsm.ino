@@ -949,6 +949,9 @@ void changeServerNumber() {
     } else if (inputIs(serverNumberBuffer,"JAY")) { 
       Serial.println("Server number set to: 09451136212");
       strcpy(flashServerNumber.inputNumber, "09451136212");
+    } else if (inputIs(serverNumberBuffer,"CHI")) { 
+      Serial.println("Server number set to: 09954127577");
+      strcpy(flashServerNumber.inputNumber, "09954127577");
     } else if (atoi(serverNumberBuffer) == 0) {          //Server number should start with an integer or '-'/'+' sign, else it will default to GLOBE1
       Serial.println("Server number defaulted to GLOBE1");
       strcpy(flashServerNumber.inputNumber, default_serverNumber);

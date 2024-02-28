@@ -301,25 +301,25 @@ void setup() {
     Serial.println(F("****************************************"));
     bootMsg = false; //skip sending logger powerup msg
       
-  } else if (get_logger_mode() == 7) {
-    // GSM power related
-    Serial.println(F("****************************************"));
-    Serial.print("Logger Version: ");
-    Serial.println(get_logger_mode());
-    Serial.println("Default to GSM.");
-    Serial.println(F("****************************************"));
-    flashLed(LED_BUILTIN, 10, 100);
-    init_ublox();
-    Watchdog.reset();
+  // } else if (get_logger_mode() == 7) {
+  //   // GSM power related
+  //   Serial.println(F("****************************************"));
+  //   Serial.print("Logger Version: ");
+  //   Serial.println(get_logger_mode());
+  //   Serial.println("Default to GSM.");
+  //   Serial.println(F("****************************************"));
+  //   flashLed(LED_BUILTIN, 10, 100);
+  //   init_ublox();
+  //   Watchdog.reset();
     
-  } else if (get_logger_mode() == 8) {
-    Serial.println(F("****************************************"));
-    Serial.print("Logger Version: ");
-    Serial.println(get_logger_mode());
-    Serial.println("Default to LoRa communication.");
-    Serial.println(F("****************************************"));
-    init_ublox();
-    bootMsg = false; //skip sending logger powerup msg
+  // } else if (get_logger_mode() == 8) {
+  //   Serial.println(F("****************************************"));
+  //   Serial.print("Logger Version: ");
+  //   Serial.println(get_logger_mode());
+  //   Serial.println("Default to LoRa communication.");
+  //   Serial.println(F("****************************************"));
+  //   init_ublox();
+  //   bootMsg = false; //skip sending logger powerup msg
       
   } else {
     // GSM power related
@@ -486,7 +486,8 @@ void loop() {
       debug_println("Begin: logger mode 7");
       turn_ON_GSM(get_gsm_power_mode());
       Watchdog.reset();
-      getGNSSData(); //read gnss data + send gsm
+      getGNSSData(dataToSend, sizeof(dataToSend)); //read gnss data
+      send_thru_gsm(dataToSend, get_serverNum_from_flashMem());
       Watchdog.reset();
       turn_OFF_GSM(get_gsm_power_mode());
       Watchdog.reset();
@@ -495,7 +496,10 @@ void loop() {
       debug_println("Begin: logger mode 8");
       turn_ON_GSM(get_gsm_power_mode());
       Watchdog.reset();
-      getGNSSData(); //read gnss data + send lora
+      getGNSSData(dataToSend, sizeof(dataToSend)); //read gnss data
+      send_thru_lora(dataToSend);
+      delay(100);
+      send_thru_lora(read_batt_vol(get_calib_param()));
       Watchdog.reset();
       turn_OFF_GSM(get_gsm_power_mode());
       Watchdog.reset();

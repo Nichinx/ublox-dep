@@ -12,8 +12,6 @@ int ave_count = 12;
 bool read_flag = false;
 uint8_t rx_lora_flag = 0;
 
-unsigned long start;
-
 // Defines storage for the lat and lon as double
 double d_lat; // latitude
 double d_lon; // longitude
@@ -35,6 +33,7 @@ char tempstr[100];
 char volt[10];
 char temp[10];
 
+unsigned long start;
 
 void init_ublox() {
   Wire.begin();
@@ -51,7 +50,7 @@ void init_ublox() {
 }
 
 void disableNMEAMessages() {
-  Serial.println("disabling....");
+  // Serial.println("disabling....");
   // Disable specific NMEA messages
   myGNSS.disableNMEAMessage(UBX_NMEA_GLL, PIO_SERCOM); //Several of these are on by default on ublox board so let's disable them
   myGNSS.disableNMEAMessage(UBX_NMEA_GSA, PIO_SERCOM);
@@ -124,19 +123,23 @@ void getRTCM() {
       Serial.println("Receive failed");
     }
     buflen = (bufptr - buf);     //Total bytes received in all packets
-    Serial2.write(buf, buflen); //Send data to the GPS
+    // Serial2.write(buf, buflen); //Send data to the GPS
+    DUESerial.write(buf, buflen); //Send data to the GPS
     digitalWrite(LED_BUILTIN, LOW);
   }
 }
 
-void getGNSSData() {
+void getGNSSData(char *dataToSend, unsigned int bufsize) {
+  init_ublox(); 
+  start = millis();
+
   do {
     getRTCM();
   } while (((checkRTKFixType() != 2) || checkSatelliteCount() < min_sat) && ((millis() - start) < rtcm_timeout));
 
   if (checkRTKFixType() == 2 && checkSatelliteCount() >= min_sat) {
     if (!rx_lora_flag) {
-      processGNSSData(dataToSend, voltMessage);
+      processGNSSData(dataToSend);
       rx_lora_flag = true;
       read_flag = true;
     }
@@ -156,20 +159,30 @@ void getGNSSData() {
     strncat(dataToSend, "*", 2);
     strncat(dataToSend, Ctimestamp, 13);
 
-    if (get_logger_mode() == 7) { 
-      send_message_segments(dataToSend);
-      delay(500);
-      send_message_segments(voltMessage); // End-of-String
-    } else if (get_logger_mode() == 8){
-      send_thru_lora(dataToSend);
-      delay(1000);
-      send_thru_lora(voltMessage); // End-of-String
+    // if (get_logger_mode() == 7) { 
+    //   send_message_segments(dataToSend);
+    //   delay(500);
+    //   send_message_segments(voltMessage); // End-of-String
+    // } else if (get_logger_mode() == 8){
+    //   send_thru_lora(dataToSend);
+    //   delay(1000);
+    //   send_thru_lora(voltMessage); // End-of-String
+    // }
+
+    if (get_logger_mode() == 7) {
+    /**
+    * Remove 1st and 2nd character data in string
+    * Not needed in GSM mode
+    */
+      for (byte i = 0; i < strlen(dataToSend); i++) {
+        dataToSend[i] = dataToSend[i + 2];
+      }
     }
     
   }
 }
 
-void processGNSSData(char *dataToSend, char *voltMessage) {
+void processGNSSData(char *dataToSend) {
   memset(dataToSend, '\0', sizeof(dataToSend));
   memset(voltMessage, '\0', sizeof(voltMessage));
 
