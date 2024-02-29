@@ -35,6 +35,12 @@ char temp[10];
 
 unsigned long start;
 
+/* Pin 23-Rx ; 22-Tx (UBLOX serial) */
+Uart Serial3(&sercom3, 23, 22, SERCOM_RX_PAD_0, UART_TX_PAD_2);
+void SERCOM2_Handler() {
+  Serial3.IrqHandler();
+}
+
 void init_ublox() {
   Wire.begin();
   if (myGNSS.begin(Wire) == false) {
@@ -124,7 +130,8 @@ void getRTCM() {
     }
     buflen = (bufptr - buf);     //Total bytes received in all packets
     // Serial2.write(buf, buflen); //Send data to the GPS
-    DUESerial.write(buf, buflen); //Send data to the GPS
+    // DUESerial.write(buf, buflen); //Send data to the GPS
+    Serial3.write(buf, buflen); //Send data to the GPS
     digitalWrite(LED_BUILTIN, LOW);
   }
 }
@@ -178,7 +185,6 @@ void getGNSSData(char *dataToSend, unsigned int bufsize) {
         dataToSend[i] = dataToSend[i + 2];
       }
     }
-    
   }
 }
 

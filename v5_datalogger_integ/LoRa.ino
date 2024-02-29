@@ -162,7 +162,7 @@ void key_gen(char *_reference_string) {
   //   strcat(ack_msg, ack_key);
   //   ack_msg[13] = '\0';
   // }
-  if (get_logger_mode() == 2) {
+  if ((get_logger_mode() == 2) || (get_logger_mode() == 8)) {
     //  gets first charaters (depending on router char length) from reference to generate acknowledgement key
     strncat(ack_msg, _reference_string, (strlen(loggerName.sensorA)));             
   } else {
