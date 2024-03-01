@@ -185,6 +185,12 @@ void SERCOM1_Handler() {
   Serial2.IrqHandler();
 }
 
+// // Pin 22 for MISO(TX), 23 for MOSI(RX)
+// Uart Serial3(&sercom4, PIN_SPI_MOSI, PIN_SPI_MISO, SERCOM_RX_PAD_2, UART_TX_PAD_0);
+// void SERCOM4_Handler() {
+//   Serial3.IrqHandler();
+// }
+
 typedef struct
 {
   boolean valid;
@@ -256,10 +262,15 @@ void setup() {
   Serial.begin(BAUDRATE);
   DUESerial.begin(DUEBAUD);
   GSMSerial.begin(GSMBAUDRATE);
-
+  // Serial3.begin(BAUDRATE);
+  
   /* Assign pins 10 & 11 UART SERCOM functionality */
   pinPeripheral(10, PIO_SERCOM);
   pinPeripheral(11, PIO_SERCOM);
+
+  // // Assign pins 22 & 23 SERCOM_ALT functionality
+  // pinPeripheral(PIN_SPI_MOSI, PIO_SERCOM_ALT);
+  // pinPeripheral(PIN_SPI_MISO, PIO_SERCOM_ALT);
 
   Wire.begin();
   rtc.begin();
@@ -487,6 +498,7 @@ void loop() {
       turn_ON_GSM(get_gsm_power_mode());
       Watchdog.reset();
       getGNSSData(dataToSend, sizeof(dataToSend)); //read gnss data
+      Watchdog.reset();
       send_thru_gsm(dataToSend, get_serverNum_from_flashMem());
       Watchdog.reset();
       turn_OFF_GSM(get_gsm_power_mode());
@@ -494,14 +506,10 @@ void loop() {
     } else if (get_logger_mode() == 8) {
       // GNSS sensor Tx
       debug_println("Begin: logger mode 8");
-      turn_ON_GSM(get_gsm_power_mode());
-      Watchdog.reset();
       getGNSSData(dataToSend, sizeof(dataToSend)); //read gnss data
       send_thru_lora(dataToSend);
       delay(100);
       send_thru_lora(read_batt_vol(get_calib_param()));
-      Watchdog.reset();
-      turn_OFF_GSM(get_gsm_power_mode());
       Watchdog.reset();
     } else {
       // default arQ like sending

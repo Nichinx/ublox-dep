@@ -3,7 +3,7 @@ SFE_UBLOX_GNSS myGNSS;
 
 #define BUFLEN (5*RH_RF95_MAX_MESSAGE_LEN) //max size of data burst we can handle - (5 full RF buffers) - just arbitrarily large
 #define RFWAITTIME 500 //maximum milliseconds to wait for next LoRa packet - used to be 600 - may have been too long
-#define rtcm_timeout 60000 //3 minutes
+#define rtcm_timeout 180000 //3 minutes
 
 char sitecode[6]; //logger name - sensor site code
 int min_sat = 30;
@@ -35,11 +35,32 @@ char temp[10];
 
 unsigned long start;
 
-/* Pin 23-Rx ; 22-Tx (UBLOX serial) */
-Uart Serial3(&sercom3, 23, 22, SERCOM_RX_PAD_0, UART_TX_PAD_2);
-void SERCOM2_Handler() {
-  Serial3.IrqHandler();
-}
+// /* Pin 23-Rx ; 22-Tx (UBLOX serial) */
+// Uart Serial3(&sercom3, 23, 22, SERCOM_RX_PAD_0, UART_TX_PAD_2);
+// void SERCOM2_Handler() {
+//   Serial3.IrqHandler();
+// }
+
+// Define the pin numbers for MISO and MOSI
+// #define PIN_MISO        12 // MISO: SERCOM4/PAD[0]
+// #define PIN_MOSI        10 // MOSI: SERCOM4/PAD[2]
+
+// Create a new UART instance (e.g., Serial3) using SERCOM4 -- 12 for Rx, 10 for Tx -- 22 for MISO(TX), 23 for MOSI(RX)
+// Uart Serial3(&sercom4, PIN_SPI_MOSI, PIN_SPI_MISO, SERCOM_RX_PAD_2, UART_TX_PAD_0);
+// Uart Serial3(&sercom4, PIN_SPI_MOSI, PIN_SPI_MISO, SERCOM_RX_PAD_3, UART_TX_PAD_2);
+
+// // Interrupt handler for SERCOM4
+// void SERCOM4_Handler() {
+//   Serial3.IrqHandler();
+// }
+
+// void init_sercom3() {
+//   Serial3.begin(BAUDRATE);
+  
+//   // Assign pins 10 & 12 SERCOM_ALT functionality -- 22 & 23
+//   pinPeripheral(PIN_SPI_MOSI, PIO_SERCOM_ALT);
+//   pinPeripheral(PIN_SPI_MISO, PIO_SERCOM_ALT);
+// }
 
 void init_ublox() {
   Wire.begin();
@@ -47,12 +68,12 @@ void init_ublox() {
     Serial.println(F("u-blox GNSS not detected at default I2C address. Please check wiring. Freezing."));
     while (1);
   }
-  myGNSS.setI2COutput(COM_TYPE_UBX || COM_TYPE_NMEA); //Set the I2C port to output UBX only (turn off NMEA noise)
+  myGNSS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
   myGNSS.setNavigationFrequency(5); //Set output to 20 times a second
   myGNSS.setHighPrecisionMode(true);  
   myGNSS.powerSaveMode(true);
   initialize_sitecode();
-  disableNMEAMessages();
+  // disableNMEAMessages();
 }
 
 void disableNMEAMessages() {
@@ -129,9 +150,9 @@ void getRTCM() {
       Serial.println("Receive failed");
     }
     buflen = (bufptr - buf);     //Total bytes received in all packets
-    // Serial2.write(buf, buflen); //Send data to the GPS
+    Serial2.write(buf, buflen); //Send data to the GPS
     // DUESerial.write(buf, buflen); //Send data to the GPS
-    Serial3.write(buf, buflen); //Send data to the GPS
+    // Serial3.write(buf, buflen); //Send data to the GPS
     digitalWrite(LED_BUILTIN, LOW);
   }
 }
@@ -184,6 +205,37 @@ void getGNSSData(char *dataToSend, unsigned int bufsize) {
       for (byte i = 0; i < strlen(dataToSend); i++) {
         dataToSend[i] = dataToSend[i + 2];
       }
+
+      GSMSerial.begin(GSMBAUDRATE);
+      resetGSM();
+      gsmNetworkAutoConnect();
+
+      if (gsmRingFlag) {
+      // check sms commands
+      // flashLed(LED_BUILTIN, 2, 100);
+      // send_thru_gsm("OTA CALL RESET", get_serverNum_from_flashMem());        //for testing only
+        gsmRingFlag = false;
+        Watchdog.reset();
+        delay_millis(1000);
+        turn_ON_GSM(get_gsm_power_mode());
+        Watchdog.reset();
+        digitalWrite(LED_BUILTIN, HIGH);
+        GSMSerial.write("AT+CMGL=\"ALL\"\r");
+        delay_millis(300);
+        while (GSMSerial.available() > 0) {
+          processIncomingByte(GSMSerial.read(), 0);
+        }
+        Watchdog.reset();
+        turn_OFF_GSM(get_gsm_power_mode());
+        Watchdog.reset();
+        gsmDeleteReadSmsInbox();
+        Watchdog.reset();
+        attachInterrupt(digitalPinToInterrupt(GSMINT), ringISR, FALLING);
+        digitalWrite(LED_BUILTIN, LOW);
+        Watchdog.reset();
+    }
+
+      turn_ON_GSM(get_gsm_power_mode());
     }
   }
 }

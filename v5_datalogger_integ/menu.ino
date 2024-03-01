@@ -105,13 +105,10 @@ void getAtcommand() {
       turn_OFF_GSM(get_gsm_power_mode());
     } else if (get_logger_mode() == 8) {
       // GNSS sensor only (LORA)
-      turn_ON_GSM(get_gsm_power_mode());
       getGNSSData(dataToSend, sizeof(dataToSend)); //read gnss data
       send_thru_lora(dataToSend);
       delay(100);
       send_thru_lora(read_batt_vol(get_calib_param()));
-      delay_millis(1000);
-      turn_OFF_GSM(get_gsm_power_mode());
     }
     Serial.println("* * * * * * * * * * * * * * * * * * * *");
   } else if (command == "B") {
