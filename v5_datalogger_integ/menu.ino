@@ -109,7 +109,16 @@ void getAtcommand() {
       send_thru_lora(dataToSend);
       delay(100);
       send_thru_lora(read_batt_vol(get_calib_param()));
-    }
+    } else if (get_logger_mode() == 9) {
+      // Gateway with rain rain gauge and GNSS Sensor
+      turn_ON_GSM(get_gsm_power_mode());
+      getGNSSData(dataToSend, sizeof(dataToSend)); //read gnss data
+      send_thru_gsm(dataToSend, get_serverNum_from_flashMem());
+      delay_millis(1000);
+      send_rain_data(0);
+      delay_millis(1000);
+      turn_OFF_GSM(get_gsm_power_mode());
+    } 
     Serial.println("* * * * * * * * * * * * * * * * * * * *");
   } else if (command == "B") {
     Serial.print("Rain tips: ");
@@ -175,6 +184,11 @@ void getAtcommand() {
       Serial.println(get_logger_C_from_flashMem());
       Serial.print("Remote Sensor Name C: ");
       Serial.println(get_logger_D_from_flashMem());
+    } else if (get_logger_mode() == 9) {
+      Serial.print("Gateway name: ");
+      Serial.println(get_logger_A_from_flashMem());
+      Serial.print("Sensor Name (GNSS): ");
+      Serial.println(get_logger_B_from_flashMem());
     } else if (get_logger_mode() == 13) {
       Serial.print("Gateway name: ");
       Serial.println(get_logger_A_from_flashMem());
@@ -188,7 +202,7 @@ void getAtcommand() {
       Serial.println(get_logger_E_from_flashMem());
       Serial.print("Remote Sensor Name E: ");
       Serial.println(get_logger_F_from_flashMem());
-    } else {  // 2; 6; 7; 8
+    } else {  // 2; 6; 7(GNSS Gateway); 8(GNSS Tx)
       // Serial.print("Gateway sensor name: ");
       // Serial.println(get_logger_A_from_flashMem());
       Serial.print("Sensor name: ");
@@ -659,6 +673,7 @@ void printLoggerMode() {
   Serial.println("[6] Rain gauge sensor only - GSM");
   Serial.println("[7] GNSS sensor only - GSM");
   Serial.println("[8] GNSS sensor Tx");
+  Serial.println("[9] Gateway rain gauge with GNSS sensor");
 }
 
 uint8_t get_logger_mode() {
@@ -713,6 +728,12 @@ void get_logger_mode_equivalent() {
     Serial.println("GNSS sensor only (Tx)");
     Serial.print("Remote Sensor name:     ");
     Serial.println(get_logger_A_from_flashMem());
+  } else if (get_logger_mode() == 9) {
+    Serial.println("Gateway Rain Gauge with GNSS Sensor");
+    Serial.print("Gateway sensor name: ");
+    Serial.println(get_logger_A_from_flashMem());
+    Serial.print("Sensor name (GNSS): ");
+    Serial.println(get_logger_B_from_flashMem());
   } else {  //mode 2
     Serial.println("Router mode");
     Serial.print("Logger name:     ");

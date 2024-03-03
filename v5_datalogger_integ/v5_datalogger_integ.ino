@@ -64,7 +64,7 @@ By : DRM
 #define LORATIMEOUT 500000         // 8.33 minutes delay  (temporarily unused)
 #define LORATIMEOUTMODE2 900000    // 15.0 mnutes  (temporarily unused)
 #define LORATIMEOUTMODE3 1200000   // 20.0 mnutes  (temporarily unused)
-#define DUETIMEOUT 300000           // 180 second delay
+#define DUETIMEOUT 300000          // 180 second delay
 #define DUEDELAY 60000             // 1.0 minute delay
 #define RAININT A4                 // rainfall interrupt pin A4
 #define DEBUGTIMEOUT 300000        // debug timeout in case no data recieved; 60K~1minute
@@ -185,11 +185,11 @@ void SERCOM1_Handler() {
   Serial2.IrqHandler();
 }
 
-// // Pin 22 for MISO(TX), 23 for MOSI(RX)
-// Uart Serial3(&sercom4, PIN_SPI_MOSI, PIN_SPI_MISO, SERCOM_RX_PAD_2, UART_TX_PAD_0);
-// void SERCOM4_Handler() {
-//   Serial3.IrqHandler();
-// }
+// Pin 22 for MISO(TX), 23 for MOSI(RX)
+Uart Serial3(&sercom4, PIN_SPI_MISO, PIN_SPI_MOSI, PAD_SERIAL_RX, PAD_SERIAL_TX);
+void SERCOM4_Handler() {
+  Serial3.IrqHandler();
+}
 
 typedef struct
 {
@@ -262,15 +262,15 @@ void setup() {
   Serial.begin(BAUDRATE);
   DUESerial.begin(DUEBAUD);
   GSMSerial.begin(GSMBAUDRATE);
-  // Serial3.begin(BAUDRATE);
-  
+  Serial3.begin(BAUDRATE);
+
   /* Assign pins 10 & 11 UART SERCOM functionality */
   pinPeripheral(10, PIO_SERCOM);
   pinPeripheral(11, PIO_SERCOM);
 
-  // // Assign pins 22 & 23 SERCOM_ALT functionality
-  // pinPeripheral(PIN_SPI_MOSI, PIO_SERCOM_ALT);
-  // pinPeripheral(PIN_SPI_MISO, PIO_SERCOM_ALT);
+  // Assign pins 22 & 23 SERCOM_ALT functionality
+  pinPeripheral(PIN_SPI_MOSI, PIO_SERCOM_ALT);
+  pinPeripheral(PIN_SPI_MISO, PIO_SERCOM_ALT);
 
   Wire.begin();
   rtc.begin();
@@ -298,10 +298,10 @@ void setup() {
   // attachInterrupt(digitalPinToInterrupt(RTCSCLPIN), rtcTicker, FALLING);
 
   init_Sleep();  // initialize MCU sleep state
-  
+
   setNextAlarm(alarmFromFlashMem());  // rtc alarm settings
   rf95.sleep();
-  
+
   delay_millis(3000);
   enable_watchdog();
   if (get_logger_mode() == 2) {
@@ -310,28 +310,28 @@ void setup() {
     Serial.println(get_logger_mode());
     Serial.println("Default to LoRa communication.");
     Serial.println(F("****************************************"));
-    bootMsg = false; //skip sending logger powerup msg
-      
-  // } else if (get_logger_mode() == 7) {
-  //   // GSM power related
-  //   Serial.println(F("****************************************"));
-  //   Serial.print("Logger Version: ");
-  //   Serial.println(get_logger_mode());
-  //   Serial.println("Default to GSM.");
-  //   Serial.println(F("****************************************"));
-  //   flashLed(LED_BUILTIN, 10, 100);
-  //   init_ublox();
-  //   Watchdog.reset();
-    
-  // } else if (get_logger_mode() == 8) {
-  //   Serial.println(F("****************************************"));
-  //   Serial.print("Logger Version: ");
-  //   Serial.println(get_logger_mode());
-  //   Serial.println("Default to LoRa communication.");
-  //   Serial.println(F("****************************************"));
-  //   init_ublox();
-  //   bootMsg = false; //skip sending logger powerup msg
-      
+    bootMsg = false;  //skip sending logger powerup msg
+
+    // } else if (get_logger_mode() == 7) {
+    //   // GSM power related
+    //   Serial.println(F("****************************************"));
+    //   Serial.print("Logger Version: ");
+    //   Serial.println(get_logger_mode());
+    //   Serial.println("Default to GSM.");
+    //   Serial.println(F("****************************************"));
+    //   flashLed(LED_BUILTIN, 10, 100);
+    //   init_ublox();
+    //   Watchdog.reset();
+
+    // } else if (get_logger_mode() == 8) {
+    //   Serial.println(F("****************************************"));
+    //   Serial.print("Logger Version: ");
+    //   Serial.println(get_logger_mode());
+    //   Serial.println("Default to LoRa communication.");
+    //   Serial.println(F("****************************************"));
+    //   init_ublox();
+    //   bootMsg = false; //skip sending logger powerup msg
+
   } else {
     // GSM power related
     Serial.println(F("****************************************"));
@@ -354,7 +354,7 @@ void setup() {
       // printMenu();
       digitalWrite(LED_BUILTIN, LOW);
       serial_flag = 1;
-      bootMsg = false; //skip sending logger powerup msg
+      bootMsg = false;  //skip sending logger powerup msg
       disable_watchdog();
     }
     // timeOut in case walang serial na makuha in ~10 seconds
@@ -371,7 +371,7 @@ void setup() {
 }
 
 void loop() {
-  
+
   if (runGSMInit && (get_logger_mode() != 2)) {  // single instance run to initiate gsm module
     runGSMInit = false;
     delay_millis(500);
@@ -380,8 +380,8 @@ void loop() {
 
   if (debug_flag == 1) printMenu();
 
-  if (bootMsg) { //for testing only
-    send_thru_gsm("LOGGER POWER UP", get_serverNum_from_flashMem());        
+  if (bootMsg) {  //for testing only
+    send_thru_gsm("LOGGER POWER UP", get_serverNum_from_flashMem());
     // if (serverALT(get_serverNum_from_flashMem()) != "NANEEEE") {
     //   Serial.print("Sending to alternate number: ");
     //   send_thru_gsm("LOGGER POWER UP", serverALT(get_serverNum_from_flashMem()));
@@ -400,7 +400,7 @@ void loop() {
       debug_flag = 0;
     }
   }
-  
+
   if (gsmRingFlag) {
     // check sms commands
     // flashLed(LED_BUILTIN, 2, 100);
@@ -426,7 +426,7 @@ void loop() {
     Watchdog.reset();
   }
 
-  if (OperationFlag) {    // main operation
+  if (OperationFlag) {  // main operation
     Watchdog.reset();
     flashLed(LED_BUILTIN, 5, 100);
     detachInterrupt(digitalPinToInterrupt(RTCINTPIN));
@@ -434,7 +434,7 @@ void loop() {
     // set RESET 'ALARM TIME' here.
     // Use 24hr format; but '0' insetead of '00')
     // 23,30 by default
-    setResetFlag(23,30);
+    setResetFlag(23, 30);
 
     sending_stack[0] = '\0';
     if (get_logger_mode() == 1) {
@@ -497,7 +497,7 @@ void loop() {
       debug_println("Begin: logger mode 7");
       turn_ON_GSM(get_gsm_power_mode());
       Watchdog.reset();
-      getGNSSData(dataToSend, sizeof(dataToSend)); //read gnss data
+      getGNSSData(dataToSend, sizeof(dataToSend));  //read gnss data
       Watchdog.reset();
       send_thru_gsm(dataToSend, get_serverNum_from_flashMem());
       Watchdog.reset();
@@ -506,10 +506,23 @@ void loop() {
     } else if (get_logger_mode() == 8) {
       // GNSS sensor Tx
       debug_println("Begin: logger mode 8");
-      getGNSSData(dataToSend, sizeof(dataToSend)); //read gnss data
+      getGNSSData(dataToSend, sizeof(dataToSend));  //read gnss data
       send_thru_lora(dataToSend);
       delay(100);
       send_thru_lora(read_batt_vol(get_calib_param()));
+      Watchdog.reset();
+    } else if (get_logger_mode() == 9) {
+      // Gateway Rain Gauge with GNSS Sensor
+      debug_println("Begin: logger mode 9");
+      turn_ON_GSM(get_gsm_power_mode());
+      Watchdog.reset();
+      getGNSSData(dataToSend, sizeof(dataToSend));  //read gnss data
+      Watchdog.reset();
+      send_thru_gsm(dataToSend, get_serverNum_from_flashMem());
+      Watchdog.reset();
+      send_rain_data(0);
+      Watchdog.reset();
+      turn_OFF_GSM(get_gsm_power_mode());
       Watchdog.reset();
     } else {
       // default arQ like sending
@@ -539,15 +552,14 @@ void loop() {
   attachInterrupt(digitalPinToInterrupt(GSMINT), ringISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(RAININT), rainISR, FALLING);
   attachInterrupt(digitalPinToInterrupt(RTCINTPIN), wakeISR, FALLING);
-  
+
   rtc.clearINTStatus();
 
   if (alarmResetFlag) {
     if (get_logger_mode() != 2) send_thru_gsm("Resetting data logger with alarm..", get_serverNum_from_flashMem());
     delay_millis(2000);
     NVIC_SystemReset();
-  }
-  else {
+  } else {
     sleepNow();
   }
 }
@@ -565,7 +577,7 @@ void disable_watchdog() {
 
 /*Enable sleep-standby*/
 void sleepNow() {
-  
+
   if (get_logger_mode() == 2) {
     Watchdog.reset();
   } else {
@@ -583,9 +595,9 @@ void sleepNow() {
   LowPower.standby();                          // enters sleep mode
   // __DSB();
   // __WFI();
-  SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;   // Enable systick interrupt
-  // WDTsleepDuration = Watchdog.sleep();                  
-  // delay(500); 
+  SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;  // Enable systick interrupt
+  // WDTsleepDuration = Watchdog.sleep();
+  // delay(500);
   // digitalWrite(LED_BUILTIN, LOW);
   // delay(2000);
 }
@@ -600,16 +612,15 @@ void wakeISR() {
     enable_watchdog();
     // Watchdog.reset();
   }
-  
+
   OperationFlag = true;
   //insert function here to set reset flag for daialy reset
   // compute daily hh mm to match desired reset time
-  
+
 
 
   // detach the interrupt in the ISR so that multiple ISRs are not called
   Serial.println("RTC interrupt");
-  
 }
 
 void ringISR() {
@@ -617,10 +628,10 @@ void ringISR() {
     enable_watchdog();
   }
   gsmRingFlag = true;
-  
+
   // ringNow = millis();
   // if ((ringNow - ringPrev > 5000) && (ringNow - ringPrev < 10000))  {
-    // NVIC_SystemReset();     // immediate reset
+  // NVIC_SystemReset();     // immediate reset
   // }
   // ringPrev = ringNow;
 }
@@ -769,7 +780,7 @@ char *get_logger_F_from_flashMem() {
 //   return flashNum;
 // }
 
-char* get_serverNum_from_flashMem() {
+char *get_serverNum_from_flashMem() {
   static char serverNumber[15];
   flashServerNumber = newServerNum.read();
   strcpy(serverNumber, flashServerNumber.inputNumber);
@@ -778,7 +789,7 @@ char* get_serverNum_from_flashMem() {
   if (strlen(serverNumber) == 0) {
     strcpy(serverNumber, default_serverNumber);
   }
-  serverNumber[strlen(serverNumber)+1] = 0x00;
+  serverNumber[strlen(serverNumber) + 1] = 0x00;
 
   return serverNumber;
 }
@@ -970,7 +981,7 @@ void init_Sleep() {
  * mode in sending data: 1-gsm ; 0 - LoRa(defualt) ; 2 - V5 logger
  */
 void get_Due_Data(uint8_t mode, String serverNum) {
-  
+
   if (debug_flag == 0) {
     Watchdog.reset();
   }
@@ -1037,7 +1048,7 @@ void get_Due_Data(uint8_t mode, String serverNum) {
           // send_thru_gsm(streamBuffer, get_serverNum_from_flashMem());
           // send_thru_gsm(streamBuffer, serverNum);
           aggregate_received_data(streamBuffer);
-          if (debug_flag == 0) { //reset watchdog before resuming
+          if (debug_flag == 0) {  //reset watchdog before resuming
             Watchdog.reset();
           }
           flashLed(LED_BUILTIN, 2, 100);
@@ -1048,7 +1059,7 @@ void get_Due_Data(uint8_t mode, String serverNum) {
           strcat(streamBuffer, "<<");
           delay(10);
           send_thru_lora(streamBuffer);
-          if (debug_flag == 0) { //reset watchdog before resuming
+          if (debug_flag == 0) {  //reset watchdog before resuming
             Watchdog.reset();
           }
           flashLed(LED_BUILTIN, 2, 100);
@@ -1091,23 +1102,23 @@ void get_Due_Data(uint8_t mode, String serverNum) {
   turn_OFF_due(get_logger_mode());
   DUESerial.end();
   if (debug_flag == 0) {
-        Watchdog.reset();
+    Watchdog.reset();
   }
   send_message_segments(sending_stack);
   if (debug_flag == 0) {
-        Watchdog.reset();
+    Watchdog.reset();
   }
 
   if (mode == 2 || mode == 7) {
     delay_millis(2000);
     send_thru_lora(read_batt_vol(get_calib_param()));
-  } 
+  }
 
   flashLed(LED_BUILTIN, 4, 90);
   customDueFlag = 0;
   getSensorDataFlag = true;
   // display_freeram();
-  
+
   if (debug_flag == 0) {
     Watchdog.reset();
   }
@@ -1270,11 +1281,11 @@ int freeRam() {
 }
 
 void send_message_segments(char *msg_dump) {
-  
+
   char freeram_buf[6];
   char ram_buffer[30];
   ram_buffer[0] = '\0';
-  
+
   if (debug_flag == 0) {
     Watchdog.reset();
   }
@@ -1312,7 +1323,7 @@ void send_message_segments(char *msg_dump) {
   ram_buffer[strlen(ram_buffer) + 1] = '\0';
 
   Serial.println(ram_buffer);
-  
+
   if (debug_flag == 0) {
     Watchdog.reset();
   }
@@ -1335,18 +1346,18 @@ void rtcTicker() {
   Serial.println("Tick");
 }
 
-//  Resets the datalogger once a day. 
+//  Resets the datalogger once a day.
 //  Sets a flag [alarmResetFlag] to reset(instead of sleep) the datalogger before the main operaion loop ends.
 //  Executed within operation loop (for now), minuta alarm should be equivalent to set RTC alam minute.
-//  [0 or 30 for 30 minute interval] 
-//  [0, 15, 30, 45 for 15 minute interval] 
+//  [0 or 30 for 30 minute interval]
+//  [0, 15, 30, 45 for 15 minute interval]
 //  etc..
 void setResetFlag(uint8_t hourAlarm, uint8_t minuteAlarm) {
   DateTime checkTime = rtc.now();
   char sendNotif[100];
   if (checkTime.hour() == hourAlarm && checkTime.minute() == minuteAlarm) {
     if (get_logger_mode() != 2) {
-      sprintf(sendNotif, "Current time [%d:%d] Datalogger will reset after data collection.",checkTime.hour(), checkTime.minute() );
+      sprintf(sendNotif, "Current time [%d:%d] Datalogger will reset after data collection.", checkTime.hour(), checkTime.minute());
       send_thru_gsm(sendNotif, get_serverNum_from_flashMem());
     }
     alarmResetFlag = true;

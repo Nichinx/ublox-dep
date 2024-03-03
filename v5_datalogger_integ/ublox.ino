@@ -150,8 +150,8 @@ void getRTCM() {
       Serial.println("Receive failed");
     }
     buflen = (bufptr - buf);     //Total bytes received in all packets
-    Serial2.write(buf, buflen); //Send data to the GPS
-    // DUESerial.write(buf, buflen); //Send data to the GPS
+    // Serial2.write(buf, buflen); //Send data to the GPS
+    DUESerial.write(buf, buflen); //Send data to the GPS
     // Serial3.write(buf, buflen); //Send data to the GPS
     digitalWrite(LED_BUILTIN, LOW);
   }
@@ -352,7 +352,14 @@ void noGNSSDataAcquired() {
 }
 
 void initialize_sitecode() {
-  char *logger_A_data = get_logger_A_from_flashMem();
-  strncpy(sitecode, logger_A_data, 5); // Copy up to 5 characters to avoid buffer overflow
-  sitecode[5] = '\0'; // Null-terminate the string
+  if (get_logger_mode() == 9) {
+    char *logger_B_data = get_logger_B_from_flashMem();
+    strncpy(sitecode, logger_B_data, 5); // Copy up to 5 characters to avoid buffer overflow
+    sitecode[5] = '\0'; // Null-terminate the string
+  } else {
+    char *logger_A_data = get_logger_A_from_flashMem();
+    strncpy(sitecode, logger_A_data, 5); // Copy up to 5 characters to avoid buffer overflow
+    sitecode[5] = '\0'; // Null-terminate the string
+  }
+  
 }
