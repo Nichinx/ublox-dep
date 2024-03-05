@@ -578,7 +578,7 @@ void disable_watchdog() {
 /*Enable sleep-standby*/
 void sleepNow() {
 
-  if (get_logger_mode() == 2) {
+  if ((get_logger_mode() == 2) || (get_logger_mode() == 7)) {
     Watchdog.reset();
   } else {
     gsmDeleteReadSmsInbox();

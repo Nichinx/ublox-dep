@@ -63,6 +63,7 @@ unsigned long start;
 // }
 
 void init_ublox() {
+  DUESerial.begin(BAUDRATE);
   Wire.begin();
   if (myGNSS.begin(Wire) == false) {
     Serial.println(F("u-blox GNSS not detected at default I2C address. Please check wiring. Freezing."));
@@ -360,6 +361,5 @@ void initialize_sitecode() {
     char *logger_A_data = get_logger_A_from_flashMem();
     strncpy(sitecode, logger_A_data, 5); // Copy up to 5 characters to avoid buffer overflow
     sitecode[5] = '\0'; // Null-terminate the string
-  }
-  
+  } 
 }
