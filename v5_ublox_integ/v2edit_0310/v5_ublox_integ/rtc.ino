@@ -115,7 +115,7 @@ uint16_t nextAlarm(int currentMinute, int intervalSaved) {
   } else {
     intervalEquivalent = 30;
   }
-  //
+
   int computed_alarm = (((currentMinute/intervalEquivalent)+1)*intervalEquivalent);
   if (computed_alarm >= 60) {
     next_alarm = 0;
@@ -123,28 +123,4 @@ uint16_t nextAlarm(int currentMinute, int intervalSaved) {
     next_alarm = computed_alarm;
   }
   return next_alarm;
-}
-
-int dueSamplingTime() {
-  DateTime now = rtc.now();
-  if ((now.minute() >= 0) && (now.minute() <= 10)) {
-    return 1;
-  } else if ((now.minute() >= 30) && (now.minute() <= 40)) {
-    return 1;
-  } else {
-    return 0;
-  }
-  enable_rtc_interrupt();
-}
-
-void enable_rtc_interrupt()
-{
-  rtc.enableInterrupts(store_rtc, 00); // interrupt at (minutes, seconds)
-  if (DEBUG == 1) {
-    Serial.print("Next alarm: ");
-  }
-  if (DEBUG == 1) {
-    Serial.println(store_rtc);
-  }
-  readTimeStamp();
 }

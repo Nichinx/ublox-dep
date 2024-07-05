@@ -43,7 +43,7 @@ int lora_TX_end = 0;
 #define RTCINTPIN 6
 #define VBATPIN A7    //new copy
 #define VBATEXT A5
-// #define UBXPWR 5     //ublox power pin
+#define UBXPWR 5     //ublox power pin
 
 // for feather m0
 #define RFM95_CS 8
@@ -80,13 +80,15 @@ void setup() {
 
   pinMode(LED, OUTPUT);
   pinMode(RFM95_RST, OUTPUT);
-  // pinMode(UBXPWR, OUTPUT); 
   digitalWrite(RFM95_RST, HIGH);
 
-  digitalWrite(RFM95_RST, LOW);
-  delay_millis(10);
-  digitalWrite(RFM95_RST, HIGH);
-  delay_millis(10);
+  pinMode(UBXPWR, OUTPUT);
+  digitalWrite(UBXPWR, HIGH);
+
+  // digitalWrite(RFM95_RST, LOW);
+  // delay_millis(10);
+  // digitalWrite(RFM95_RST, HIGH);
+  // delay_millis(10);
 
   Serial.println("Feather LoRa RX");
   digitalWrite(RFM95_RST, LOW);
@@ -116,6 +118,7 @@ void setup() {
 
   rf95.setTxPower(23, false);
   init_ublox();
+  Serial.println("done init ubx + lora");
   // readTimeStamp();
 }
 
@@ -125,6 +128,7 @@ void loop() {
   rx_lora_flag = 0;
 
   do {
+    Serial.println("Enter do loop...");
     get_rtcm();
   } while (((RTK() != 2) || SIV() < min_sat) && ((millis() - start) < rtcm_timeout)); 
 

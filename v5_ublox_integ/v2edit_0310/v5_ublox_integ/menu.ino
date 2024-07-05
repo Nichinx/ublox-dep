@@ -12,7 +12,8 @@ void getAtcommand() {
   int i_equals = 0;
   unsigned long startHere = millis();
   bool timeToExit;
-
+  sending_stack[0] = '\0'; 
+  
   do {
     timeToExit = timeOutExit(startHere, DEBUGTIMEOUT);
     serial_line = Serial.readStringUntil('\n');
@@ -53,21 +54,16 @@ void getAtcommand() {
       // default arQ like sending
       turn_ON_GSM(get_gsm_power_mode());
       send_rain_data(0);
-      disable_watchdog();
       get_Due_Data(1, get_serverNum_from_flashMem());
-      disable_watchdog();
       turn_OFF_GSM(get_gsm_power_mode());
     } else if (get_logger_mode() == 1) {
       // arQ + 1 LoRa receiver
       receive_lora_data(1);
-      disable_watchdog();
       if (gsmPwrStat) {
         turn_ON_GSM(get_gsm_power_mode());
       }
       get_Due_Data(1, get_serverNum_from_flashMem());
-      disable_watchdog();
       send_rain_data(0);
-      disable_watchdog();
       if (gsmPwrStat) {
         turn_OFF_GSM(get_gsm_power_mode());
       }
@@ -75,61 +71,53 @@ void getAtcommand() {
     } else if (get_logger_mode() == 2) {
       // LoRa transmitter of version 5 datalogger
       get_Due_Data(2, get_serverNum_from_flashMem());
-      disable_watchdog();
-      
     } else if (get_logger_mode() == 3) {
       // only one trasmitter
       turn_ON_GSM(get_gsm_power_mode());
       send_rain_data(0);
-      disable_watchdog();
       receive_lora_data(3);
-      disable_watchdog();
       turn_OFF_GSM(get_gsm_power_mode());
 
     } else if (get_logger_mode() == 4) {
       // Two transmitter
       turn_ON_GSM(get_gsm_power_mode());
-//      send_rain_data(0);
-//      disable_watchdog();
-//      receive_lora_data(4);
-      receive_ublox_data(4);
-      disable_watchdog();
+      send_rain_data(0);
+      receive_lora_data(4);
       turn_OFF_GSM(get_gsm_power_mode());
-      
     } else if (get_logger_mode() == 5) {
       // Three transmitter
       turn_ON_GSM(get_gsm_power_mode());
-//      send_rain_data(0);
-//      disable_watchdog();
-//      receive_lora_data(5);
-      receive_ublox_data(5);
-      disable_watchdog();
+      send_rain_data(0);
+      receive_lora_data(5);
       turn_OFF_GSM(get_gsm_power_mode());
-      
     } else if (get_logger_mode() == 6) {
       // Sends rain gauge data ONLY
       turn_ON_GSM(get_gsm_power_mode());
       send_rain_data(0);
-      disable_watchdog();
       delay_millis(1000);
       turn_OFF_GSM(get_gsm_power_mode());
-      
-    } else if (get_logger_mode() == 21) {
-      // Gateway with subsurface + rain gauge + ublox
-      receive_ublox_data(2);
-      disable_watchdog();
-//    if (gsmPwrStat) {
+    } else if (get_logger_mode() == 7) {
+      // GNSS sensor only (GSM)
       turn_ON_GSM(get_gsm_power_mode());
-//    }
-//      if (dueSamplingTime() == 1){
-//        get_Due_Data(1, get_serverNum_from_flashMem());
-//        disable_watchdog();
-//        send_rain_data(0);
-//        disable_watchdog();
-//      }
-//    if (gsmPwrStat) {
+      getGNSSData(dataToSend, sizeof(dataToSend)); //read gnss data
+      send_thru_gsm(dataToSend, get_serverNum_from_flashMem());
+      delay_millis(1000);
       turn_OFF_GSM(get_gsm_power_mode());
-//    }
+    } else if (get_logger_mode() == 8) {
+      // GNSS sensor only (LORA)
+      getGNSSData(dataToSend, sizeof(dataToSend)); //read gnss data
+      send_thru_lora(dataToSend);
+      delay(100);
+      send_thru_lora(read_batt_vol(get_calib_param()));
+    } else if (get_logger_mode() == 9) {
+      // Gateway with rain rain gauge and GNSS Sensor
+      turn_ON_GSM(get_gsm_power_mode());
+      getGNSSData(dataToSend, sizeof(dataToSend)); //read gnss data
+      send_thru_gsm(dataToSend, get_serverNum_from_flashMem());
+      delay_millis(1000);
+      send_rain_data(0);
+      delay_millis(1000);
+      turn_OFF_GSM(get_gsm_power_mode());
     } 
     Serial.println("* * * * * * * * * * * * * * * * * * * *");
   } else if (command == "B") {
@@ -196,6 +184,11 @@ void getAtcommand() {
       Serial.println(get_logger_C_from_flashMem());
       Serial.print("Remote Sensor Name C: ");
       Serial.println(get_logger_D_from_flashMem());
+    } else if (get_logger_mode() == 9) {
+      Serial.print("Gateway name: ");
+      Serial.println(get_logger_A_from_flashMem());
+      Serial.print("Sensor Name (GNSS): ");
+      Serial.println(get_logger_B_from_flashMem());
     } else if (get_logger_mode() == 13) {
       Serial.print("Gateway name: ");
       Serial.println(get_logger_A_from_flashMem());
@@ -209,12 +202,7 @@ void getAtcommand() {
       Serial.println(get_logger_E_from_flashMem());
       Serial.print("Remote Sensor Name E: ");
       Serial.println(get_logger_F_from_flashMem());
-    } else if (get_logger_mode() == 21) {
-      Serial.print("Gateway/Sensor name: ");
-      Serial.println(get_logger_A_from_flashMem());
-      Serial.print("Remote Sensor Name A: ");
-      Serial.println(get_logger_B_from_flashMem());
-    } else {  // 2; 6; 7
+    } else {  // 2; 6; 7(GNSS Gateway); 8(GNSS Tx)
       // Serial.print("Gateway sensor name: ");
       // Serial.println(get_logger_A_from_flashMem());
       Serial.print("Sensor name: ");
@@ -229,19 +217,14 @@ void getAtcommand() {
     Serial.println(get_serverNum_from_flashMem());
     Serial.println("");
     Serial.println("Default server numbers:");
-    Serial.println("GLOBE1 - 639175972526 ; GLOBE2 - 639175388301");
-    Serial.println("SMART1 - 639088125642 ; SMART2 - 639088125639");
+    Serial.println("GLOBE1 - 09175972526 ; GLOBE2 - 09175388301");
+    Serial.println("SMART1 - 09088125642 ; SMART2 - 09088125639");
     if (isChangeParam())
       changeServerNumber();
     Serial.println("* * * * * * * * * * * * * * * * * * * *");
     Serial.readStringUntil('\n');
   } else if (command == "I") {
     resetGSM();
-    // gsm_network_connect();
-    // init_gsm();
-    gsmNetworkAutoConnect();
-    Serial.print("CSQ: ");
-    Serial.println(readCSQ());
     Serial.println("* * * * * * * * * * * * * * * * * * * *");
   } else if (command == "J") {
     Serial.print("Rain collector type: ");
@@ -288,6 +271,10 @@ void getAtcommand() {
       GSMSerial.write("AT\r");
       delay_millis(300);
       send_thru_gsm(specialMsg, get_serverNum_from_flashMem());
+      // if (serverALT(get_serverNum_from_flashMem()) != "NANEEEE") {
+      //   Serial.print("Sending to alternate number: ");
+      //   send_thru_gsm(specialMsg, serverALT(get_serverNum_from_flashMem()));
+      // }
     }
     Serial.println("* * * * * * * * * * * * * * * * * * * *");
   } else if (command == "N") {
@@ -363,6 +350,10 @@ void getAtcommand() {
     if (get_logger_mode() != 2) {
       Serial.print("Server number:   ");
       Serial.println(get_serverNum_from_flashMem());
+      // if (serverALT(get_serverNum_from_flashMem()) != "NANEEEE") {
+      //   Serial.print("Alternate number: ");
+      //   Serial.println(serverALT(get_serverNum_from_flashMem()));
+      // }
       Serial.print("Gsm power mode:  ");
       if (get_gsm_power_mode() == 1) {
         Serial.println("Sleep/wake via AT commands");
@@ -415,6 +406,7 @@ void getAtcommand() {
   } else if (command == "EXIT" || command == "X") {
 
     Serial.println("Exiting debug mode!");
+    resetGSM();
     resetRainTips();
     setNextAlarm(alarmFromFlashMem());
     delay_millis(75);
@@ -422,19 +414,20 @@ void getAtcommand() {
 
     Serial.println("* * * * * * * * * * * * * * * * * * * *");
     debug_flag = 0;
+
   } else if (command == "GSM_RECEIVE_TEST") {
     Serial.println("GSM receive test!");
     flashLed(LED_BUILTIN, 3, 50);
 
-    Serial.println("AT + CNMI");
-    if (get_gsm_power_mode() == 0) {
-      Serial.println("1st AT + CNMI");
-      GSMSerial.write("AT+CNMI=1,2,0,0,0\r");
-      delay_millis(100);
-    }
-    GSMSerial.write("AT+CNMI=1,2,0,0,0\r");
+    // Serial.println("AT + CNMI");
+    // if (get_gsm_power_mode() == 0) {
+    //   Serial.println("1st AT + CNMI");
+    //   GSMSerial.write("AT+CNMI=1,2,0,0,0\r");
+    //   delay_millis(100);
+    // }
+    GSMSerial.write("AT+CMGL=\"ALL\"\r");
     delay_millis(300);
-    Serial.println("after CNMI");
+    // Serial.println("after CNMI");
     while (GSMSerial.available() > 0) {
       processIncomingByte(GSMSerial.read(), 0);
     }
@@ -448,20 +441,19 @@ void getAtcommand() {
     Serial.println(readBatteryVoltage(get_calib_param()));
     Serial.println("* * * * * * * * * * * * * * * * * * * *");
   } else if (command == "SEND_RAIN_VIA_LORA") {
-    disable_watchdog();
     send_rain_data(1);
     Serial.println("* * * * * * * * * * * * * * * * * * * *");
   } else if (command == "LORA_WAIT_TEST") {
     Serial.print("Datalogger Mode: ");
     get_logger_mode_equivalent();
     receive_lora_data(get_logger_mode());
-    disable_watchdog();
     Serial.println("* * * * * * * * * * * * * * * * * * * *");
   } else if (command == "LORA_SEND_TEST") {
     char send_buffer[150];
     send_buffer[0] = '\0';
     strcat(send_buffer, ">>");
     strncat(send_buffer, get_logger_A_from_flashMem(), 5);
+    // strcat(send_buffer, "LABBDUE");
     strcat(send_buffer, "*SAMPLE_DATA_qwertyuiopasdfghjklzxcvbnm*");
     strncat(send_buffer, Ctimestamp, 12);
     send_buffer[strlen(send_buffer) + 1] = '\0';
@@ -535,7 +527,6 @@ void getAtcommand() {
   //         // GSM
   //         send_rain_data(0);
   //     }
-  //     disable_watchdog();
   //     // wakeGSM();
   //     Serial.println("* * * * * * * * * * * * * * * * * * * *");
   // }
@@ -551,6 +542,7 @@ void getAtcommand() {
 
 void printMenu() {
   Serial.println(F(" "));
+  Serial.println(F("****************************************"));
   Serial.print(F("Firmware Version: "));
   Serial.println(F(firmwareVersion));
   Serial.println(F("****************************************"));
@@ -679,8 +671,11 @@ void printLoggerMode() {
   Serial.println("[4] Gateway mode with 2 Routers");
   Serial.println("[5] Gateway mode with 3 Routers");
   Serial.println("[6] Rain gauge sensor only - GSM");
-  Serial.println("[21] Gateway with subsurface + rain gauge + ublox");
+  Serial.println("[7] GNSS sensor only - GSM");
+  Serial.println("[8] GNSS sensor Tx");
+  Serial.println("[9] Gateway rain gauge with GNSS sensor");
 }
+
 uint8_t get_logger_mode() {
   int lversion = loggerMode.read();
   return lversion;
@@ -725,11 +720,20 @@ void get_logger_mode_equivalent() {
     Serial.println("Rain gauge only (GSM)");
     Serial.print("Logger name:     ");
     Serial.println(get_logger_A_from_flashMem());
-  } else if (get_logger_mode() == 21) {
-      Serial.print("Gateway/Sensor name: ");
-      Serial.println(get_logger_A_from_flashMem());
-      Serial.print("Remote Sensor Name A (ublox):  ");
-      Serial.println(get_logger_B_from_flashMem());
+  } else if (get_logger_mode() == 7) {
+    Serial.println("GNSS sensor only (GSM)");
+    Serial.print("Logger name:     ");
+    Serial.println(get_logger_A_from_flashMem());
+  } else if (get_logger_mode() == 8) {
+    Serial.println("GNSS sensor only (Tx)");
+    Serial.print("Remote Sensor name:     ");
+    Serial.println(get_logger_A_from_flashMem());
+  } else if (get_logger_mode() == 9) {
+    Serial.println("Gateway Rain Gauge with GNSS Sensor");
+    Serial.print("Gateway sensor name: ");
+    Serial.println(get_logger_A_from_flashMem());
+    Serial.print("Sensor name (GNSS): ");
+    Serial.println(get_logger_B_from_flashMem());
   } else {  //mode 2
     Serial.println("Router mode");
     Serial.print("Logger name:     ");
@@ -840,8 +844,25 @@ void inputLoggerNames() {
       Serial.print("Input name of remote SENSOR: ");
       String inputLoggerB = Serial.readStringUntil('\n');
       Serial.println(inputLoggerB);
-      inputLoggerA.toCharArray(loggerName.sensorA, 6);
-      inputLoggerB.toCharArray(loggerName.sensorB, 6);
+
+      inputLoggerA.trim();
+      inputLoggerB.trim();
+
+      if (inputLoggerA.length() == 4) {
+        inputLoggerA.toCharArray(loggerName.sensorA, 6);
+        loggerName.sensorA[5] = '\0';
+      } else {
+        inputLoggerA.toCharArray(loggerName.sensorA, 6);
+        loggerName.sensorA[6] = '\0';
+      }
+      if (inputLoggerB.length() == 4) {
+        inputLoggerB.toCharArray(loggerName.sensorB, 6);
+        loggerName.sensorB[5] = '\0';
+      } else {
+        inputLoggerB.toCharArray(loggerName.sensorB, 6);
+        loggerName.sensorB[6] = '\0';
+      }
+      
       flashLoggerName.write(loggerName);
     }
   } else if (get_logger_mode() == 3) {
@@ -858,8 +879,27 @@ void inputLoggerNames() {
       Serial.print("Input name of remote SENSOR: ");
       String inputLoggerB = Serial.readStringUntil('\n');
       Serial.println(inputLoggerB);
-      inputLoggerA.toCharArray(loggerName.sensorA, 6);
-      inputLoggerB.toCharArray(loggerName.sensorB, 6);
+
+      inputLoggerA.trim();
+      inputLoggerB.trim();
+
+      if (inputLoggerA.length() == 4) {
+        inputLoggerA.toCharArray(loggerName.sensorA, 6);
+        loggerName.sensorA[5] = '\0';
+      } else {
+        inputLoggerA.toCharArray(loggerName.sensorA, 6);
+        loggerName.sensorA[6] = '\0';
+      }
+      if (inputLoggerB.length() == 4) {
+        inputLoggerB.toCharArray(loggerName.sensorB, 6);
+        loggerName.sensorB[5] = '\0';
+      } else {
+        inputLoggerB.toCharArray(loggerName.sensorB, 6);
+        loggerName.sensorB[6] = '\0';
+      }
+
+      // inputLoggerA.toCharArray(loggerName.sensorA, 6);
+      // inputLoggerB.toCharArray(loggerName.sensorB, 6);
       flashLoggerName.write(loggerName);
     }
   } else if (get_logger_mode() == 4) {
@@ -879,9 +919,36 @@ void inputLoggerNames() {
       Serial.print("Input name of remote SENSOR B: ");
       String inputLoggerC = Serial.readStringUntil('\n');
       Serial.println(inputLoggerC);
-      inputLoggerA.toCharArray(loggerName.sensorA, 6);
-      inputLoggerB.toCharArray(loggerName.sensorB, 6);
-      inputLoggerC.toCharArray(loggerName.sensorC, 6);
+
+      inputLoggerA.trim();
+      inputLoggerB.trim();
+      inputLoggerC.trim();
+      
+      if (inputLoggerA.length() == 4) {
+        inputLoggerA.toCharArray(loggerName.sensorA, 6);
+        loggerName.sensorA[5] = '\0';
+      } else {
+        inputLoggerA.toCharArray(loggerName.sensorA, 6);
+        loggerName.sensorA[6] = '\0';
+      }
+      if (inputLoggerB.length() == 4) {
+        inputLoggerB.toCharArray(loggerName.sensorB, 6);
+        loggerName.sensorB[5] = '\0';
+      } else {
+        inputLoggerB.toCharArray(loggerName.sensorB, 6);
+        loggerName.sensorB[6] = '\0';
+      }
+      if (inputLoggerC.length() == 4) {
+        inputLoggerC.toCharArray(loggerName.sensorC, 6);
+        loggerName.sensorC[5] = '\0';
+      } else {
+        inputLoggerC.toCharArray(loggerName.sensorC, 6);
+        loggerName.sensorC[6] = '\0';
+      }
+
+      // inputLoggerA.toCharArray(loggerName.sensorA, 6);
+      // inputLoggerB.toCharArray(loggerName.sensorB, 6);
+      // inputLoggerC.toCharArray(loggerName.sensorC, 6);
       flashLoggerName.write(loggerName);
     }
   } else if (get_logger_mode() == 5) {
@@ -904,10 +971,45 @@ void inputLoggerNames() {
       Serial.print("Input name of remote SENSOR C: ");
       String inputLoggerD = Serial.readStringUntil('\n');
       Serial.println(inputLoggerD);
-      inputLoggerA.toCharArray(loggerName.sensorA, 6);
-      inputLoggerB.toCharArray(loggerName.sensorB, 6);
-      inputLoggerC.toCharArray(loggerName.sensorC, 6);
-      inputLoggerD.toCharArray(loggerName.sensorD, 6);
+
+      inputLoggerA.trim();
+      inputLoggerB.trim();
+      inputLoggerC.trim();
+      inputLoggerD.trim();
+
+      if (inputLoggerA.length() == 4) {
+        inputLoggerA.toCharArray(loggerName.sensorA, 6);
+        loggerName.sensorA[5] = '\0';
+      } else {
+        inputLoggerA.toCharArray(loggerName.sensorA, 6);
+        loggerName.sensorA[6] = '\0';
+      }
+      if (inputLoggerB.length() == 4) {
+        inputLoggerB.toCharArray(loggerName.sensorB, 6);
+        loggerName.sensorB[5] = '\0';
+      } else {
+        inputLoggerB.toCharArray(loggerName.sensorB, 6);
+        loggerName.sensorB[6] = '\0';
+      }
+      if (inputLoggerC.length() == 4) {
+        inputLoggerC.toCharArray(loggerName.sensorC, 6);
+        loggerName.sensorC[5] = '\0';
+      } else {
+        inputLoggerC.toCharArray(loggerName.sensorC, 6);
+        loggerName.sensorC[6] = '\0';
+      }
+      if (inputLoggerD.length() == 4) {
+        inputLoggerD.toCharArray(loggerName.sensorD, 6);
+        loggerName.sensorD[5] = '\0';
+      } else {
+        inputLoggerD.toCharArray(loggerName.sensorD, 6);
+        loggerName.sensorD[6] = '\0';
+      }
+
+      // inputLoggerA.toCharArray(loggerName.sensorA, 6);
+      // inputLoggerB.toCharArray(loggerName.sensorB, 6);
+      // inputLoggerC.toCharArray(loggerName.sensorC, 6);
+      // inputLoggerD.toCharArray(loggerName.sensorD, 6);
       flashLoggerName.write(loggerName);
     }
   } else if (get_logger_mode() == 13) {
@@ -947,30 +1049,6 @@ void inputLoggerNames() {
       inputLoggerF.toCharArray(loggerName.sensorF, 6);
       flashLoggerName.write(loggerName);
     }
-  }  else if (get_logger_mode() == 21) {
-    Serial.print("Input name of GATEWAY: ");
-    while (!Serial.available()) {
-      if (timeOutExit(startHere, DEBUGTIMEOUT)) {
-        debug_flag_exit = true;
-        break;
-      }
-    }
-    if (Serial.available()) {
-      String inputLoggerA = Serial.readStringUntil('\n');
-      Serial.println(inputLoggerA);
-      Serial.print("Input name of remote SENSOR A: ");
-      String inputLoggerB = Serial.readStringUntil('\n');
-      Serial.println(inputLoggerB);
-      Serial.print("Input name of remote SENSOR B: ");
-      String inputLoggerC = Serial.readStringUntil('\n');
-      Serial.println(inputLoggerC);
-
-      inputLoggerA.toCharArray(loggerName.sensorA, 6);
-      inputLoggerB.toCharArray(loggerName.sensorB, 6);
-      inputLoggerC.toCharArray(loggerName.sensorC, 6);
-
-      flashLoggerName.write(loggerName);
-    }
   } else {
     Serial.print("Input name of SENSOR: ");
     while (!Serial.available()) {
@@ -982,7 +1060,17 @@ void inputLoggerNames() {
     if (Serial.available()) {
       String inputLoggerA = Serial.readStringUntil('\n');
       Serial.println(inputLoggerA);
-      inputLoggerA.toCharArray(loggerName.sensorA, 6);
+
+      inputLoggerA.trim();
+      
+      if (inputLoggerA.length() == 4) {
+        inputLoggerA.toCharArray(loggerName.sensorA, 6);
+        loggerName.sensorA[5] = '\0';
+      } else {
+        inputLoggerA.toCharArray(loggerName.sensorA, 6);
+        loggerName.sensorA[6] = '\0';
+      }
+      // inputLoggerA.toCharArray(loggerName.sensorA, 6);
       flashLoggerName.write(loggerName);
     }
   }
@@ -1064,4 +1152,12 @@ void debug_print(const char* debugText) {
   if (Serial.available()){
     Serial.print(debugText);
   }
+}
+
+bool inputIs(const char *inputFromSerial, const char* expectedInput) {
+  bool correctInput = false;
+  if ((strstr(inputFromSerial,expectedInput)) && (strlen(expectedInput) == strlen (inputFromSerial))) {
+    correctInput = true;
+  }
+  return correctInput;
 }

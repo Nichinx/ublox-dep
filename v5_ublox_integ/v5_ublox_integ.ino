@@ -185,12 +185,6 @@ void SERCOM1_Handler() {
   Serial2.IrqHandler();
 }
 
-// Pin 22 for MISO(TX), 23 for MOSI(RX)
-Uart Serial3(&sercom4, PIN_SPI_MISO, PIN_SPI_MOSI, PAD_SERIAL_RX, PAD_SERIAL_TX);
-void SERCOM4_Handler() {
-  Serial3.IrqHandler();
-}
-
 typedef struct
 {
   boolean valid;
@@ -262,15 +256,10 @@ void setup() {
   Serial.begin(BAUDRATE);
   DUESerial.begin(DUEBAUD);
   GSMSerial.begin(GSMBAUDRATE);
-  Serial3.begin(BAUDRATE);
 
   /* Assign pins 10 & 11 UART SERCOM functionality */
   pinPeripheral(10, PIO_SERCOM);
   pinPeripheral(11, PIO_SERCOM);
-
-  // Assign pins 22 & 23 SERCOM_ALT functionality
-  pinPeripheral(PIN_SPI_MOSI, PIO_SERCOM_ALT);
-  pinPeripheral(PIN_SPI_MISO, PIO_SERCOM_ALT);
 
   Wire.begin();
   rtc.begin();
@@ -304,33 +293,13 @@ void setup() {
 
   delay_millis(3000);
   enable_watchdog();
-  if (get_logger_mode() == 2) {
+  if ((get_logger_mode() == 2) || (get_logger_mode() == 8)) {
     Serial.println(F("****************************************"));
     Serial.print("Logger Version: ");
     Serial.println(get_logger_mode());
     Serial.println("Default to LoRa communication.");
     Serial.println(F("****************************************"));
     bootMsg = false;  //skip sending logger powerup msg
-
-    // } else if (get_logger_mode() == 7) {
-    //   // GSM power related
-    //   Serial.println(F("****************************************"));
-    //   Serial.print("Logger Version: ");
-    //   Serial.println(get_logger_mode());
-    //   Serial.println("Default to GSM.");
-    //   Serial.println(F("****************************************"));
-    //   flashLed(LED_BUILTIN, 10, 100);
-    //   init_ublox();
-    //   Watchdog.reset();
-
-    // } else if (get_logger_mode() == 8) {
-    //   Serial.println(F("****************************************"));
-    //   Serial.print("Logger Version: ");
-    //   Serial.println(get_logger_mode());
-    //   Serial.println("Default to LoRa communication.");
-    //   Serial.println(F("****************************************"));
-    //   init_ublox();
-    //   bootMsg = false; //skip sending logger powerup msg
 
   } else {
     // GSM power related
@@ -380,14 +349,14 @@ void loop() {
 
   if (debug_flag == 1) printMenu();
 
-  if (bootMsg) {  //for testing only
-    send_thru_gsm("LOGGER POWER UP", get_serverNum_from_flashMem());
-    // if (serverALT(get_serverNum_from_flashMem()) != "NANEEEE") {
-    //   Serial.print("Sending to alternate number: ");
-    //   send_thru_gsm("LOGGER POWER UP", serverALT(get_serverNum_from_flashMem()));
-    // }
-    bootMsg = false;
-  }
+  // if (bootMsg) {  //for testing only
+  //   send_thru_gsm("LOGGER POWER UP", get_serverNum_from_flashMem());
+  //   // if (serverALT(get_serverNum_from_flashMem()) != "NANEEEE") {
+  //   //   Serial.print("Sending to alternate number: ");
+  //   //   send_thru_gsm("LOGGER POWER UP", serverALT(get_serverNum_from_flashMem()));
+  //   // }
+  //   bootMsg = false;
+  // }
 
   while (debug_flag == 1) {
     getAtcommand();
@@ -498,7 +467,6 @@ void loop() {
       turn_ON_GSM(get_gsm_power_mode());
       Watchdog.reset();
       getGNSSData(dataToSend, sizeof(dataToSend));  //read gnss data
-      Watchdog.reset();
       send_thru_gsm(dataToSend, get_serverNum_from_flashMem());
       Watchdog.reset();
       turn_OFF_GSM(get_gsm_power_mode());
@@ -512,15 +480,17 @@ void loop() {
       send_thru_lora(read_batt_vol(get_calib_param()));
       Watchdog.reset();
     } else if (get_logger_mode() == 9) {
-      // Gateway Rain Gauge with GNSS Sensor
+      // Gateway with Subsurface Sensor, Rain Gauge and GNSS Sensor
       debug_println("Begin: logger mode 9");
       turn_ON_GSM(get_gsm_power_mode());
       Watchdog.reset();
+      send_rain_data(0); //send rain
+      Watchdog.reset();
       getGNSSData(dataToSend, sizeof(dataToSend));  //read gnss data
       Watchdog.reset();
-      send_thru_gsm(dataToSend, get_serverNum_from_flashMem());
+      get_Due_Data(1, get_serverNum_from_flashMem());
       Watchdog.reset();
-      send_rain_data(0);
+      send_thru_gsm(dataToSend, get_serverNum_from_flashMem()); 
       Watchdog.reset();
       turn_OFF_GSM(get_gsm_power_mode());
       Watchdog.reset();
@@ -578,7 +548,7 @@ void disable_watchdog() {
 /*Enable sleep-standby*/
 void sleepNow() {
 
-  if ((get_logger_mode() == 2) || (get_logger_mode() == 7)) {
+  if ((get_logger_mode() == 2) || (get_logger_mode() == 8)) {
     Watchdog.reset();
   } else {
     gsmDeleteReadSmsInbox();
@@ -986,7 +956,9 @@ void get_Due_Data(uint8_t mode, String serverNum) {
     Watchdog.reset();
   }
 
+  Serial.println(">>> changing baud rate to duebaud");
   DUESerial.begin(DUEBAUD);
+  Serial.println(">>> duebaud changed");
   unsigned long start = millis();
 
   readTimeStamp();
@@ -1355,7 +1327,7 @@ void rtcTicker() {
 void setResetFlag(uint8_t hourAlarm, uint8_t minuteAlarm) {
   DateTime checkTime = rtc.now();
   char sendNotif[100];
-  if (checkTime.hour() == hourAlarm && checkTime.minute() == minuteAlarm) {
+  if (((checkTime.hour() == hourAlarm) || (checkTime.hour() == hourAlarm-6) || (checkTime.hour() == hourAlarm-12) || (checkTime.hour() == hourAlarm-18)) && (checkTime.minute() == minuteAlarm)) {
     if (get_logger_mode() != 2) {
       sprintf(sendNotif, "Current time [%d:%d] Datalogger will reset after data collection.", checkTime.hour(), checkTime.minute());
       send_thru_gsm(sendNotif, get_serverNum_from_flashMem());

@@ -61,6 +61,7 @@ float readBatteryVoltage(uint8_t ver) {
 
 void get_rtcm() {
   rf95.setModemConfig(RH_RF95::Bw500Cr45Sf128);   //lora config for send/receive rtcm
+  Serial.println("get_rtcm");
   uint8_t buf[BUFLEN];
   unsigned buflen;
 

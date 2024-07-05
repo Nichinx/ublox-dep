@@ -30,23 +30,24 @@ uint16_t store_rtc = 00; //store rtc alarm
 #define DEBUG 1
 #define RTCINTPIN 6
 
-// We will use Serial2 - Rx on pin 11, Tx on pin 10
-Uart Serial2 (&sercom1, 11, 10, SERCOM_RX_PAD_0, UART_TX_PAD_2);
-void SERCOM1_Handler()
-{
-  Serial2.IrqHandler();
-}
+// // We will use Serial2 - Rx on pin 11, Tx on pin 10
+// Uart Serial2 (&sercom1, 11, 10, SERCOM_RX_PAD_0, UART_TX_PAD_2);
+// void SERCOM1_Handler()
+// {
+//   Serial2.IrqHandler();
+// }
 
+#define UBXPOWER 5
 #define U_SERIAL Serial1
 #define LED 13 // The LED is turned on when 1st byte is received from the serial port. It is turned off after the last byte is transmitted over LoRa.
 unsigned long start;
 
 void setup()
 {
-  rtc.begin();
+  // rtc.begin();
   /* rtc interrupt */
   // attachInterrupt(RTCINTPIN, wake, FALLING);
-  init_Sleep(); //initialize MCU sleep state
+  // init_Sleep(); //initialize MCU sleep state
   // setAlarmEvery30(0); //rtc alarm settings 0 [00 & 30] 1 [05 & 35]
 
   // setAlarm2(); // every 10 minutes
@@ -54,6 +55,9 @@ void setup()
   pinMode(LED, OUTPUT);
   pinMode(RFM95_RST, OUTPUT);
   digitalWrite(RFM95_RST, HIGH);
+  
+  pinMode(UBXPOWER, OUTPUT);
+  digitalWrite(UBXPOWER, HIGH);
 
   Serial.begin(115200);
   U_SERIAL.begin(115200); 
