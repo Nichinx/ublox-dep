@@ -12,3 +12,5 @@ Last edit on files : May 10, 2024
 *may ubx power pin, hindi nagwwork soft serial nung testing
 *inupload ito a ublox dedicated board
 *soft serial 10/11 doesn't work sa dedicated board (hindi Mabasa, hindi nakakareceive ng msgs)
+
+Reorganized folders/files : July 6, 2024
