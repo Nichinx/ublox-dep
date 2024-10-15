@@ -1015,7 +1015,7 @@ void inputLoggerNames() {
       // inputLoggerD.toCharArray(loggerName.sensorD, 6);
       flashLoggerName.write(loggerName);
     }
-  } else if ((get_logger_mode() == 9) || (get_logger_mode() == 10)) {
+  } else if (get_logger_mode() == 9) {
     Serial.print("Input name of GATEWAY: ");
     while (!Serial.available()) {
       if (timeOutExit(startHere, DEBUGTIMEOUT)) {

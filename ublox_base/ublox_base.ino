@@ -57,6 +57,7 @@ void setup()
   digitalWrite(RFM95_RST, HIGH);
   
   pinMode(UBXPOWER, OUTPUT);
+  delay(1000);
   digitalWrite(UBXPOWER, HIGH);
 
   Serial.begin(115200);

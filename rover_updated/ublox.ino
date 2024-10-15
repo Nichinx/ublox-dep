@@ -92,7 +92,8 @@ void get_rtcm() {
       Serial.println("Receive failed");
     }
     buflen = (bufptr - buf);     //Total bytes received in all packets
-    Serial2.write(buf, buflen); //Send data to the GPS
+    // Serial2.write(buf, buflen); //Send data to the GPS
+    DUESerial.write(buf, buflen);
     digitalWrite(LED, LOW);
   }
 }

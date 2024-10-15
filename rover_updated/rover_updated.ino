@@ -55,18 +55,20 @@ RH_RF95 rf95(RFM95_CS, RFM95_INT);
 // We will use Serial2 - Rx on pin 11, Tx on pin 10
 Uart Serial2 (&sercom1, 11, 10, SERCOM_RX_PAD_0, UART_TX_PAD_2);
 
+#define BAUDRATE 115200
+#define DUESerial Serial1
+
 void SERCOM1_Handler() {
   Serial2.IrqHandler();
 }
 
 #define LED 13
 unsigned long start;
-
 // FlashStorage(ack_filter, int);
 
 void setup() {
-  Serial.begin(115200);
-  Serial2.begin(115200);
+  DUESerial.begin(BAUDRATE);
+  // Serial2.begin(BAUDRATE);
 
   // Assign pins 10 & 11 SERCOM functionality
   pinPeripheral(10, PIO_SERCOM);
@@ -80,10 +82,12 @@ void setup() {
 
   pinMode(LED, OUTPUT);
   pinMode(RFM95_RST, OUTPUT);
-  digitalWrite(RFM95_RST, HIGH);
-
   pinMode(UBXPWR, OUTPUT);
-  digitalWrite(UBXPWR, HIGH);
+
+  delay(1000);
+
+  digitalWrite(RFM95_RST, HIGH);  
+  digitalWrite(UBXPWR, LOW);
 
   // digitalWrite(RFM95_RST, LOW);
   // delay_millis(10);
@@ -124,6 +128,7 @@ void setup() {
 
 //10.26.23 - averaging data with filter
 void loop() {
+  digitalWrite(UBXPWR, HIGH);
   start = millis();
   rx_lora_flag = 0;
 
@@ -156,6 +161,8 @@ void loop() {
     send_thru_lora(dataToSend);
     delay(1000);
     send_thru_lora(voltMessage); //EOS
+
+    digitalWrite(UBXPWR, LOW);
   }
 
   attachInterrupt(RTCINTPIN, wake, FALLING);
